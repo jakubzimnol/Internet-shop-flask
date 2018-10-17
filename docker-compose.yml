@@ -10,9 +10,7 @@ services:
     env_file:
       - .env
     container_name: backend
-    command: bash -c "export FLASK_ENV=development
-      && export FLASK_APP=app.py
-      && flask run --host 0.0.0.0 --port 8000"
+    command: bash -c "flask run --host 0.0.0.0 --port 8000"
     volumes:
       - ./backend:/backend
 
@@ -20,6 +18,3 @@ services:
     image: postgres
     env_file:
       - .env
-
-volumes:
-  static-files:
