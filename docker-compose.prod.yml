@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  backend:
+    command: uwsgi uwsgi.ini
+    volumes:
+      - static-files:/backend/eventsgo_project/static
+    restart: always
+
+  nginx:
+    build:
+      context: nginx
+      args:
+        NGINX_CONFIG: nginx.conf
+    restart: always

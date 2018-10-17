@@ -5,8 +5,6 @@ services:
     build: ./backend
     depends_on:
       - db
-    ports:
-      - ${PORTS}
     env_file:
       - .env
     container_name: backend
@@ -14,7 +12,23 @@ services:
     volumes:
       - ./backend:/backend
 
+  nginx:
+    build:
+      context: nginx
+      args:
+        NGINX_CONFIG: nginx.dev.conf
+    ports:
+      - ${NGINX_PORTS}
+    volumes:
+      - static-files:/static
+    container_name: nginx
+    depends_on:
+      - backend
+
   db:
     image: postgres
     env_file:
       - .env
+
+volumes:
+  static-files:
