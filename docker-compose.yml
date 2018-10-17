@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  backend:
+    build: ./backend
+    depends_on:
+      - db
+    ports:
+      - ${PORTS}
+    env_file:
+      - .env
+    container_name: backend
+    command: bash -c "source venv/bin/activate && ls && FLASK_ENV=development
+      && export FLASK_APP=hello.py
+      && flask run --host 0.0.0.0 --port 8000"
+    volumes:
+      - ./backend:/backend
+
+  db:
+    image: postgres
+    env_file:
+      - .env
+
+volumes:
+  static-files:
