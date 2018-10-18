@@ -1,9 +1,6 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 import enum
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://scott:tiger@localhost/mydatabase'
-db = SQLAlchemy(app)
+
+from app import db
 
 
 class Role(enum.Enum):
@@ -16,6 +13,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
     bought = db.relationship('Item', backref='buyer', lazy=True)
     sold = db.relationship('Item', backref='seller', lazy=True)
     role = db.Column(db.Enum(Role))
@@ -57,7 +55,6 @@ class Subcategory(db.Model):
 
 
 class Image(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
     img_data = db.Column(db.LargeBinary, nullable=False)

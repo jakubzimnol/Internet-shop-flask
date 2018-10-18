@@ -1,8 +1,16 @@
+import os
+
 from flask import Flask
+from flask_migrate import Migrate
 from flask_restful import reqparse, abort, Api, Resource
+from flask_sqlalchemy import SQLAlchemy
 
 application = Flask(__name__)
 api = Api(application)
+application.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(application)
+migrate = Migrate(application, db)
 
 TODOS = {
     'todo1': {'task': 'build an API'},
