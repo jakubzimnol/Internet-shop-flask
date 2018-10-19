@@ -4,3 +4,4 @@ uwsgi
 flask-sqlalchemy
 flask-migrate
 psycopg2-binary
+Flask-Testing

@@ -8,9 +8,9 @@ services:
     env_file:
       - .env
     container_name: backend
-    command: bash -c "flask db migrate && flask run --host 0.0.0.0 --port 8000"
+    command: bash -c "flask db upgrade && flask run --host 0.0.0.0 --port 8000"
     volumes:
-      - ./backend:/backend
+      - ./backend:/backend:cached
 
   nginx:
     build:
