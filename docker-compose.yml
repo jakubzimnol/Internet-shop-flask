@@ -27,19 +27,6 @@ services:
     environment:
       - POSTGRES_PASSWORD:${POSTGRES_PASSWORD}
 
-  nginx:
-    build:
-      context: nginx
-      args:
-        NGINX_CONFIG: nginx.dev.conf
-    ports:
-      - ${NGINX_PORTS}
-    volumes:
-      - static-files:/static
-    container_name: nginx
-    depends_on:
-      - backend
-
   db:
     image: postgres
     env_file:
