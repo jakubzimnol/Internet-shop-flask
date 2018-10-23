@@ -42,7 +42,9 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
     _category = db.relationship('Category', backref='item', lazy=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
     _subcategory = db.relationship('Subcategory', backref='item', lazy=True)
+    subcategory_id = db.Column(db.Integer, db.ForeignKey('subcategory.id'), nullable=True)
     _image = db.relationship('Image', backref='item', lazy=True)
 
     def __repr__(self):
@@ -55,7 +57,7 @@ class Item(db.Model):
     @category.setter
     def category(self, category_name):
         category = Category.query.filter_by(name=category_name).first_or_404()
-        category.item_id = self.id
+        self.category_id = category.id
 
     @hybrid_property
     def subcategory(self):
@@ -64,7 +66,7 @@ class Item(db.Model):
     @subcategory.setter
     def subcategory(self, subcategory_name):
         subcategory = Subcategory.query.filter_by(name=subcategory_name).first_or_404()
-        subcategory.item_id = self.id
+        self.subcategory_id = subcategory.id
 
     @hybrid_property
     def image(self):
@@ -90,7 +92,6 @@ class Item(db.Model):
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, unique=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
-    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=True)
 
     def update_category(self, parameters):
         if parameters.get('name'):
@@ -106,7 +107,6 @@ class Subcategory(db.Model):
     name = db.Column(db.String(80), unique=True, nullable=False)
     _category = db.relationship('Category', backref='subcategory', lazy=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
-    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=True)
 
     @hybrid_property
     def category(self):
