@@ -8,6 +8,15 @@ from app.parsers import item_parser, subcategory_parser, category_parser, creati
 from init_app import db
 
 
+def add_to_database(item):
+    try:
+        db.session.add(item)
+        db.session.commit()
+    except exc.IntegrityError:
+        db.session.rollback()
+        return 404
+
+
 class Items(Resource):
     @marshal_with(item_marshaller)
     def get(self, item_id):
@@ -35,13 +44,8 @@ class ItemsList(Resource):
     def post(self):
         args = creating_item_parser.parse_args()
         item = Item(name=args['name'])
-        try:
-            db.session.add(item)
-            db.session.commit()
-            item.update_item(args)
-        except exc.IntegrityError:
-            db.session.rollback()
-            return 404
+        add_to_database(item)
+        item.update_item(args)
         return marshal(item, item_marshaller), 201
 
 
@@ -69,12 +73,7 @@ class CategoryList(Resource):
     def post(self):
         args = creating_category_parser.parse_args()
         category = Category(name=args['name'])
-        try:
-            db.session.add(category)
-            db.session.commit()
-        except exc.IntegrityError:
-            db.session.rollback()
-            return 404
+        add_to_database(category)
         return marshal(category, category_marshaller), 201
 
 
@@ -102,10 +101,5 @@ class SubcategoryList(Resource):
     def post(self):
         args = creating_subcategory_parser.parse_args()
         subcategory = Subcategory(name=args['name'])
-        try:
-            db.session.add(subcategory)
-            db.session.commit()
-        except exc.IntegrityError:
-            db.session.rollback()
-            return 404
+        add_to_database(subcategory)
         return marshal(subcategory, subcategory_marshaller), 201
