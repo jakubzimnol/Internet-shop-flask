@@ -18,7 +18,6 @@ application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)
-#db.create_all()
 
 
 from app.resources import ItemsList, Items, CategoryList, Categories, SubcategoryList, Subcategories

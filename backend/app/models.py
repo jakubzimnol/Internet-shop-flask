@@ -76,13 +76,13 @@ class Item(db.Model):
         image.item_id = self.id
 
     def update_item(self, parameters):
-        if 'name' in parameters and parameters['name']:
+        if parameters.get('name'):
             self.name = parameters['name']
-        if 'category' in parameters and parameters['category']:
+        if parameters.get('category'):
             self.category = parameters['category']
-        if 'subcategory' in parameters and parameters['subcategory']:
+        if parameters.get('subcategory'):
             self.subcategory = parameters['subcategory']
-        if 'image' in parameters and parameters['image']:
+        if parameters.get('image'):
             self.image = parameters['image']
         db.session.commit()
 
@@ -93,7 +93,7 @@ class Category(db.Model):
     item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=True)
 
     def update_category(self, parameters):
-        if 'name' in parameters and parameters['name']:
+        if parameters.get('name'):
             self.name = parameters['name']
         db.session.commit()
 
@@ -118,9 +118,9 @@ class Subcategory(db.Model):
         self.category_id = category.id
 
     def update_subcategory(self, parameters):
-        if 'name' in parameters and parameters['name']:
+        if parameters.get('name'):
             self.name = parameters['name']
-        if 'category' in parameters and parameters['category']:
+        if parameters.get('category'):
             self.category = parameters['category']
         db.session.commit()
 

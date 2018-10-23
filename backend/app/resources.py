@@ -1,4 +1,4 @@
-from flask_restful import Resource, fields, marshal_with, marshal
+from flask_restful import Resource, marshal_with, marshal
 from sqlalchemy import exc
 
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller

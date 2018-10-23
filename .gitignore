@@ -3,3 +3,4 @@ static
 .idea/
 __pycache__/
 app.db
+test.db
