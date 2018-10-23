@@ -12,9 +12,10 @@ def add_to_database(item):
     try:
         db.session.add(item)
         db.session.commit()
+        return True
     except exc.IntegrityError:
         db.session.rollback()
-        return 404
+        return False
 
 
 class Items(Resource):
@@ -44,7 +45,8 @@ class ItemsList(Resource):
     def post(self):
         args = creating_item_parser.parse_args()
         item = Item(name=args['name'])
-        add_to_database(item)
+        if not add_to_database(item):
+            return 404
         item.update_item(args)
         return marshal(item, item_marshaller), 201
 
@@ -73,7 +75,8 @@ class CategoryList(Resource):
     def post(self):
         args = creating_category_parser.parse_args()
         category = Category(name=args['name'])
-        add_to_database(category)
+        if not add_to_database(category):
+            return 404
         return marshal(category, category_marshaller), 201
 
 
@@ -101,5 +104,6 @@ class SubcategoryList(Resource):
     def post(self):
         args = creating_subcategory_parser.parse_args()
         subcategory = Subcategory(name=args['name'])
-        add_to_database(subcategory)
+        if not add_to_database(subcategory):
+            return 404
         return marshal(subcategory, subcategory_marshaller), 201
