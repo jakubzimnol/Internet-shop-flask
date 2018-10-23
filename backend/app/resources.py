@@ -1,28 +1,11 @@
 from flask_restful import Resource, fields, marshal_with, marshal
 from sqlalchemy import exc
 
+from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller
 from app.models import Item, Category, Subcategory
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
     creating_category_parser, creating_subcategory_parser
 from init_app import db
-
-item_marshaller = {
-    'id': fields.Integer,
-    'name': fields.String,
-    'category': fields.String,
-    'subcategory': fields.String,
-}
-
-category_marshaller = {
-    'id': fields.Integer,
-    'name': fields.String,
-}
-
-subcategory_marshaller = {
-    'id': fields.Integer,
-    'name': fields.String,
-    'category': fields.String,
-}
 
 
 class Items(Resource):
