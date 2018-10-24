@@ -1,5 +1,6 @@
 import enum
 
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -8,12 +9,14 @@ from abc import ABC, abstractmethod
 
 
 class ObjectABC(ABC):
-    name = db.Column(db.String(80), unique=True, nullable=False)
+    name = NotImplemented
     @abstractmethod
     def update(self, parameters):
         if parameters.get('name'):
             self.name = parameters['name']
 
+
+Base = declarative_base()
 
 
 class Role(enum.Enum):
@@ -47,9 +50,10 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self._password_hash, password)
 
-
-class Item(db.Model, ObjectABC):
+@ObjectABC.register
+class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
     _category = db.relationship('Category', backref='item', lazy=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
     _subcategory = db.relationship('Subcategory', backref='item', lazy=True)
@@ -95,19 +99,20 @@ class Item(db.Model, ObjectABC):
         if parameters.get('image'):
             self.image = parameters['image']
 
-
-class Category(db.Model, ObjectABC):
+@ObjectABC.register
+class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, unique=True)
-
+    name = db.Column(db.String(80), unique=True, nullable=False)
     def update(self, parameters):
         super().update(parameters)
 
     def __repr__(self):
         return '<Category %r>' % self.name
 
-
-class Subcategory(db.Model, ObjectABC):
+@ObjectABC.register
+class Subcategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
     _category = db.relationship('Category', backref='subcategory', lazy=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
 
