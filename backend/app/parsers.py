@@ -37,3 +37,7 @@ subcategory_parser.add_argument('category', type=is_category, help="This field m
 
 creating_subcategory_parser = subcategory_parser.copy()
 creating_subcategory_parser.replace_argument('name', required=True, help="This field cannot be left blank")
+
+user_parser = reqparse.RequestParser(bundle_errors=True)
+user_parser.add_argument('username', help='This field cannot be blank', required=True)
+user_parser.add_argument('password', help='This field cannot be blank', required=True)

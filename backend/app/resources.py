@@ -2,9 +2,9 @@ from flask_restful import Resource, marshal_with, marshal
 from sqlalchemy import exc
 
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller
-from app.models import Item, Category, Subcategory
+from app.models import Item, Category, Subcategory, User
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
-    creating_category_parser, creating_subcategory_parser
+    creating_category_parser, creating_subcategory_parser, user_parser
 from init_app import db
 
 
@@ -107,12 +107,18 @@ class SubcategoryList(Resource):
 
 class UserRegistration(Resource):
     def post(self):
-        return {'message': 'User registration'}
+        args = user_parser.parse_args()
+        new_user = User(
+            username=args['username'],
+            password=args['password']
+        )
+        return add_to_database(new_user)
 
 
 class UserLogin(Resource):
     def post(self):
-        return {'message': 'User login'}
+        args = user_parser.parse_args()
+        return args
 
 
 class UserLogoutAccess(Resource):
