@@ -15,7 +15,6 @@ class ObjectABC(ABC):
             self.name = parameters['name']
 
 
-
 class Role(enum.Enum):
     ADMIN = "Admin"
     SELLER = "Seller"

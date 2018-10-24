@@ -1,9 +1,9 @@
 from flask_restful import Resource, marshal_with, marshal
 
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller
-from app.models import Item, Category, Subcategory
+from app.models import Item, Category, Subcategory, User
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
-    creating_category_parser, creating_subcategory_parser
+    creating_category_parser, creating_subcategory_parser, user_parser
 from app.repositories import Repository
 from init_app import db
 
@@ -110,7 +110,9 @@ class UserRegistration(Resource):
             username=args['username'],
             password=args['password']
         )
-        return add_to_database(new_user)
+        if not Repository.add_to_database(new_user):
+            return 404
+        return marshal(new_user, Repository.user_marshaller), 201
 
 
 class UserLogin(Resource):
