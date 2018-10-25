@@ -4,3 +4,4 @@ static
 __pycache__/
 app.db
 test.db
+migrations/
