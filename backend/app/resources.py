@@ -1,7 +1,7 @@
 from flask_restful import Resource, marshal_with, marshal
 
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller, user_marshaller
-from app.models import Item, Category, Subcategory, User
+from app.models import Item, Category, Subcategory, User, RevokedTokenModel
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
     creating_category_parser, creating_subcategory_parser, user_parser
 from app.repositories import Repository
@@ -39,7 +39,7 @@ class ItemsList(Resource):
         args = creating_item_parser.parse_args()
         item = Repository.create_and_add(Item, args)
         if not item:
-            return 404
+            return {'message': 'Something went wrong'}, 500
         db.session.commit()
         return marshal(item, item_marshaller), 201
 
@@ -71,9 +71,9 @@ class CategoryList(Resource):
     @jwt_required
     def post(self):
         args = creating_category_parser.parse_args()
-        category = Repository.create_and_add(Item, args)
+        category = Repository.create_and_add(Category, args)
         if not category:
-            return 404
+            return {'message': 'Something went wrong'}, 500
         return marshal(category, category_marshaller), 201
 
 
@@ -101,34 +101,30 @@ class SubcategoryList(Resource):
 
     def post(self):
         args = creating_subcategory_parser.parse_args()
-        subcategory = Repository.create_and_add(args)
+        subcategory = Repository.create_and_add(Subcategory, args)
         if not subcategory:
-            return 404
+            return {'message': 'Something went wrong'}, 500
         return marshal(subcategory, subcategory_marshaller), 201
 
 
 class UserRegistration(Resource):
     def post(self):
         args = user_parser.parse_args()
-        new_user = User(
-            username=args['username'],
-            password_hash=args['password']
-        )
+
         try:
-            new_user.save_to_db()
+            new_user = User(username=args['username'])
+            db.session.add(new_user)
+            new_user.password_hash = args['password']
+            db.session.commit()
             access_token = create_access_token(identity=args['username'])
             refresh_token = create_refresh_token(identity=args['username'])
             return {
                 'message': 'User {} was created'.format(args['username']),
                 'access_token': access_token,
                 'refresh_token': refresh_token
-            }
+            }, 201
         except:
             return {'message': 'Something went wrong'}, 500
-
-        # if not Repository.add_to_database(new_user):
-        #     return 404
-        # return marshal(new_user, user_marshaller), 201
 
 
 class UserLogin(Resource):
@@ -142,19 +138,35 @@ class UserLogin(Resource):
                 'message': 'Logged in as {}'.format(current_user.username),
                 'access_token': access_token,
                 'refresh_token': refresh_token
-            }
+            }, 201
         else:
             return {'message': 'Wrong credentials'}
 
 
 class UserLogoutAccess(Resource):
+    @jwt_required
     def post(self):
-        return {'message': 'User logout'}
+        jti = get_raw_jwt()['jti']
+        try:
+            revoked_token = RevokedTokenModel(jti=jti)
+            db.session.add(revoked_token)
+            db.session.commit()
+            return {'message': 'Access token has been revoked'}, 201
+        except:
+            return {'message': 'Something went wrong'}, 500
 
 
 class UserLogoutRefresh(Resource):
+    @jwt_refresh_token_required
     def post(self):
-        return {'message': 'User logout'}
+        jti = get_raw_jwt()['jti']
+        try:
+            revoked_token = RevokedTokenModel(jti=jti)
+            db.session.add(revoked_token)
+            db.session.commit()
+            return {'message': 'Refresh token has been revoked'}, 201
+        except:
+            return {'message': 'Something went wrong'}, 500
 
 
 class TokenRefresh(Resource):
@@ -174,10 +186,3 @@ class AllUsers(Resource):
         db.session.delete(users)
         db.session.commit()
         return marshal(users, user_marshaller), 204
-
-
-class SecretResource(Resource):
-    def get(self):
-        return {
-            'answer': 42
-        }

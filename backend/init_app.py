@@ -1,14 +1,13 @@
 import os
 
 from flask import Flask
+from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager
 
 application = Flask(__name__)
 api = Api(application)
-
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 if application.debug == True:
@@ -19,18 +18,26 @@ else:
 application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 application.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 application.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
+application.config['JWT_BLACKLIST_ENABLED'] = True
+application.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access', 'refresh']
 
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)
 jwt = JWTManager(application)
 
+from app.models import RevokedTokenModel
+import app.resources as resources
+
+
+@jwt.token_in_blacklist_loader
+def check_if_token_in_blacklist(decrypted_token):
+    jti = decrypted_token['jti']
+    return RevokedTokenModel.is_jti_blacklisted(jti)
+
 
 @application.before_first_request
 def create_tables():
     db.create_all()
-
-
-import app.resources as resources
 
 
 api.add_resource(resources.ItemsList, '/api/item')
@@ -45,7 +52,6 @@ api.add_resource(resources.UserLogoutAccess, '/api/logout/access')
 api.add_resource(resources.UserLogoutRefresh, '/api/logout/refresh')
 api.add_resource(resources.TokenRefresh, '/api/token/refresh')
 api.add_resource(resources.AllUsers, '/api/users')
-api.add_resource(resources.SecretResource, '/api/secret')
 
 if __name__ == '__main__':
     application.run(debug=True)

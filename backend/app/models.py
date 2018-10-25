@@ -42,7 +42,7 @@ class User(db.Model):
 
     @hybrid_property
     def password_hash(self):
-        return self._password_hash;
+        return self._password_hash
 
     @password_hash.setter
     def password_hash(self, password):
@@ -150,3 +150,13 @@ class Image(db.Model):
 
     def __repr__(self):
         return '<Image %r>' % self.name
+
+
+class RevokedTokenModel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(120))
+
+    @classmethod
+    def is_jti_blacklisted(cls, jti):
+        query = cls.query.filter_by(jti=jti).first()
+        return bool(query)
