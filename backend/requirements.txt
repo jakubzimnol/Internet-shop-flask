@@ -1,5 +1,6 @@
 psycopg2-binary~=2.7.5
 Flask~=1.0.2
+flask-jwt-extended
 flask-migrate~=2.2.1
 flask-restful~=0.3.6
 flask-sqlalchemy~=2.3.2

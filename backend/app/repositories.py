@@ -5,7 +5,8 @@ from init_app import db
 
 
 class Repository():
-    def add_to_database(self, item):
+    @staticmethod
+    def add_to_database(item):
         try:
             db.session.add(item)
             db.session.commit()
@@ -14,8 +15,10 @@ class Repository():
             db.session.rollback()
             return False
 
-    def upload_image(self, image_dict):
+    @staticmethod
+    def upload_image(image_dict):
         new_image = Image(name=image_dict['name'], img_data=image_dict['img_data'], item_id=image_dict['item_id'])
         db.session.add(new_image)
         db.session.commit()
+
 

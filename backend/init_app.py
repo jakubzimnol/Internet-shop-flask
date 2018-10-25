@@ -4,6 +4,7 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import JWTManager
 
 application = Flask(__name__)
 api = Api(application)
@@ -17,9 +18,11 @@ else:
 
 application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 application.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+application.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
 
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)
+jwt = JWTManager(application)
 
 
 @application.before_first_request
