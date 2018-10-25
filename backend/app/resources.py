@@ -35,10 +35,9 @@ class ItemsList(Resource):
 
     def post(self):
         args = creating_item_parser.parse_args()
-        item = Item(name=args['name'])
-        if not Repository.add_to_database(item):
+        item = Repository.create_and_add(Item, args)
+        if not item:
             return 404
-        item.update(args)
         db.session.commit()
         return marshal(item, item_marshaller), 201
 
@@ -67,8 +66,8 @@ class CategoryList(Resource):
 
     def post(self):
         args = creating_category_parser.parse_args()
-        category = Category(name=args['name'])
-        if not Repository.add_to_database(category):
+        category = Repository.create_and_add(Item, args)
+        if not category:
             return 404
         return marshal(category, category_marshaller), 201
 
@@ -97,7 +96,7 @@ class SubcategoryList(Resource):
 
     def post(self):
         args = creating_subcategory_parser.parse_args()
-        subcategory = Subcategory(name=args['name'])
-        if not Repository.add_to_database(subcategory):
+        subcategory = Repository.create_and_add(args)
+        if not subcategory:
             return 404
         return marshal(subcategory, subcategory_marshaller), 201
