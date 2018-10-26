@@ -2,6 +2,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
     get_jwt_identity, get_raw_jwt
 from flask_restful import Resource, marshal_with, marshal
 
+from app.exceptions import IntegrityException, CreateTokenException
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller, user_marshaller
 from app.models import Item, Category, Subcategory, User, RevokedTokenModel
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
@@ -11,9 +12,12 @@ from init_app import db
 
 
 def create_tokens(username):
-    access_token = create_access_token(identity=username)
-    refresh_token = create_refresh_token(identity=username)
-    return access_token, refresh_token
+    try:
+        access_token = create_access_token(identity=username)
+        refresh_token = create_refresh_token(identity=username)
+        return access_token, refresh_token
+    except:
+        raise CreateTokenException()
 
 
 class Items(Resource):
@@ -43,13 +47,13 @@ class ItemsList(Resource):
     def get(self):
         return marshal(Item.query.all(), item_marshaller)
 
-    @jwt_required
     def post(self):
         args = creating_item_parser.parse_args()
-        item = Repository.create_and_add(Item, args)
-        if not item:
-            return {'message': 'Can not create or add item, probably this name already exist'}, 400
-        return marshal(item, item_marshaller), 201
+        try:
+            item = Repository.create_and_add(Item, args)
+            return marshal(item, item_marshaller), 201
+        except IntegrityException as exc:
+            return exc.message, exc.status_code
 
 
 class Categories(Resource):
@@ -79,10 +83,11 @@ class CategoryList(Resource):
     @jwt_required
     def post(self):
         args = creating_category_parser.parse_args()
-        category = Repository.create_and_add(Category, args)
-        if not category:
-            return {'message': 'Can not create or add category, probably this name already exist'}, 400
-        return marshal(category, category_marshaller), 201
+        try:
+            category = Repository.create_and_add(Category, args)
+            return marshal(category, category_marshaller), 201
+        except IntegrityException as exc:
+            return exc.message, exc.status_code
 
 
 class Subcategories(Resource):
@@ -112,32 +117,30 @@ class SubcategoryList(Resource):
     @jwt_required
     def post(self):
         args = creating_subcategory_parser.parse_args()
-        subcategory = Repository.create_and_add(Subcategory, args)
-        if not subcategory:
-            return {'message': 'Can not create or add subcategory, probably this name already exist'}, 400
-        return marshal(subcategory, subcategory_marshaller), 201
+        try:
+            subcategory = Repository.create_and_add(Subcategory, args)
+            return marshal(subcategory, subcategory_marshaller), 201
+        except IntegrityException as exc:
+            return exc.message, exc.status_code
 
 
 class UserRegistration(Resource):
     def post(self):
         args = user_parser.parse_args()
-        new_user = Repository.create_and_add(User, {'username': args['username']})
-        if not new_user:
-            return {'message': 'Can not create or add user, probably this username already exist'}, 400
         try:
+            new_user = Repository.create_and_add(User, {'username': args['username']})
             new_user.password_hash = args['password']
             db.session.commit()
-        except:
-            return {'message': 'Wrong password!'}, 400
-        try:
             access_token, refresh_token = create_tokens(args['username'])
             return {
-                       'message': 'User {} was created'.format(args['username']),
+                       'message': f"User {args['username']} was created",
                        'access_token': access_token,
                        'refresh_token': refresh_token
                    }, 201
-        except:
-            return {'message': 'Can not create token'}, 400
+        except IntegrityException as exc:
+            return exc.message, exc.status_code
+        except CreateTokenException as exc:
+            return exc.message, exc.status_code
 
 
 class UserLogin(Resource):
@@ -148,12 +151,12 @@ class UserLogin(Resource):
             try:
                 access_token, refresh_token = create_tokens(args['username'])
                 return {
-                           'message': 'Logged in as {}'.format(current_user.username),
+                           'message': f'Logged in as {current_user.username}',
                            'access_token': access_token,
                            'refresh_token': refresh_token
                        }
-            except:
-                 return {'message': 'Can not create token'}, 400
+            except CreateTokenException as exc:
+                return exc.message, exc.status_code
         return {'message': 'Wrong credentials'}
 
 
@@ -161,20 +164,22 @@ class UserLogoutAccess(Resource):
     @jwt_required
     def post(self):
         jti = get_raw_jwt()['jti']
-        revoked_token = Repository.create_and_add(RevokedTokenModel, {'jti': jti})
-        if not revoked_token:
-            return {'message': 'Can not create or add jti to database, probably jit is already revoked'}, 400
-        return {'message': 'Access token has been revoked'}, 201
+        try:
+            Repository.create_and_add(RevokedTokenModel, {'jti': jti})
+            return {'message': 'Access token has been revoked'}, 201
+        except IntegrityException as exc:
+            return exc.message, exc.status_code
 
 
 class UserLogoutRefresh(Resource):
     @jwt_refresh_token_required
     def post(self):
         jti = get_raw_jwt()['jti']
-        revoked_token = Repository.create_and_add(RevokedTokenModel, {'jti': jti})
-        if not revoked_token:
-            return {'message': 'Can not create or add jti to database, probably jit already exist there'}, 400
-        return {'message': 'Refresh token has been revoked'}, 201
+        try:
+            Repository.create_and_add(RevokedTokenModel, {'jti': jti})
+            return {'message': 'Refresh token has been revoked'}, 201
+        except IntegrityException as exc:
+            return exc.message, exc.status_code
 
 
 class TokenRefresh(Resource):
