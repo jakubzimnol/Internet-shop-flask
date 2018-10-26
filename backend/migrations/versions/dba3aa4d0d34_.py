@@ -1,7 +1,9 @@
 """empty message
+
 Revision ID: dba3aa4d0d34
 Revises:
 Create Date: 2018-10-23 14:39:01.493640
+
 """
 from alembic import op
 import sqlalchemy as sa
@@ -43,4 +45,4 @@ def downgrade():
     op.add_column('category', sa.Column('item_id', sa.INTEGER(), autoincrement=False, nullable=True))
     op.create_foreign_key('category_item_id_fkey', 'category', 'item', ['item_id'], ['id'])
     op.drop_constraint(None, 'category', type_='unique')
-# ### end Alembic commands ###
+    # ### end Alembic commands ###
