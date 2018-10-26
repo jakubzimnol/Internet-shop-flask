@@ -26,7 +26,8 @@ migrate = Migrate(application, db)
 jwt = JWTManager(application)
 
 from app.models import RevokedTokenModel
-import app.resources as resources
+from app.resources import ItemsList, Items, CategoryList, Categories, SubcategoryList, Subcategories, \
+    UserRegistration, UserLogin, UserLogoutAccess, UserLogoutRefresh, TokenRefresh, AllUsers
 
 
 @jwt.token_in_blacklist_loader
@@ -40,18 +41,18 @@ def create_tables():
     db.create_all()
 
 
-api.add_resource(resources.ItemsList, '/api/item')
-api.add_resource(resources.Items, '/api/item/<item_id>')
-api.add_resource(resources.CategoryList, '/api/category')
-api.add_resource(resources.Categories, '/api/category/<category_id>')
-api.add_resource(resources.SubcategoryList, '/api/subcategory')
-api.add_resource(resources.Subcategories, '/api/subcategory/<subcategory_id>')
-api.add_resource(resources.UserRegistration, '/api/registration')
-api.add_resource(resources.UserLogin, '/api/login')
-api.add_resource(resources.UserLogoutAccess, '/api/logout/access')
-api.add_resource(resources.UserLogoutRefresh, '/api/logout/refresh')
-api.add_resource(resources.TokenRefresh, '/api/token/refresh')
-api.add_resource(resources.AllUsers, '/api/users')
+api.add_resource(ItemsList, '/api/item')
+api.add_resource(Items, '/api/item/<item_id>')
+api.add_resource(CategoryList, '/api/category')
+api.add_resource(Categories, '/api/category/<category_id>')
+api.add_resource(SubcategoryList, '/api/subcategory')
+api.add_resource(Subcategories, '/api/subcategory/<subcategory_id>')
+api.add_resource(UserRegistration, '/api/registration')
+api.add_resource(UserLogin, '/api/login')
+api.add_resource(UserLogoutAccess, '/api/logout/access')
+api.add_resource(UserLogoutRefresh, '/api/logout/refresh')
+api.add_resource(TokenRefresh, '/api/token/refresh')
+api.add_resource(AllUsers, '/api/users')
 
 if __name__ == '__main__':
     application.run(debug=True)
