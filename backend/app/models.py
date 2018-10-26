@@ -1,6 +1,7 @@
 import enum
 from abc import ABC, abstractmethod
 
+from sqlalchemy import exists
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -154,9 +155,8 @@ class Image(db.Model):
 
 class RevokedTokenModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    jti = db.Column(db.String(120))
+    jwt_id = db.Column(db.String(120))
 
     @classmethod
-    def is_jti_blacklisted(cls, jti):
-        query = cls.query.filter_by(jti=jti).first()
-        return bool(query)
+    def is_jti_blacklisted(cls, jwt_id):
+        return db.session.query(exists().where(cls.jwt_id == jwt_id)).scalar()
