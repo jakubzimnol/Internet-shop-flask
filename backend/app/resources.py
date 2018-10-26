@@ -1,3 +1,5 @@
+import sys
+
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, \
     get_jwt_identity, get_raw_jwt
 from flask_restful import Resource, marshal_with, marshal
@@ -6,7 +8,7 @@ from app.exceptions import IntegrityException, CreateTokenException
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller, user_marshaller
 from app.models import Item, Category, Subcategory, User, RevokedTokenModel
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
-    creating_category_parser, creating_subcategory_parser, user_parser
+    creating_category_parser, creating_subcategory_parser, user_parser, login_user_parser
 from app.repositories import Repository
 from init_app import db
 
@@ -17,7 +19,10 @@ def create_tokens(username):
         refresh_token = create_refresh_token(identity=username)
         return access_token, refresh_token
     except:
-        raise CreateTokenException()
+        exc_info = sys.exc_info()
+        exc = CreateTokenException
+        exc.add_message(exc_info[2])
+        raise exc
 
 
 class Items(Resource):
@@ -145,7 +150,7 @@ class UserRegistration(Resource):
 
 class UserLogin(Resource):
     def post(self):
-        args = user_parser.parse_args()
+        args = login_user_parser.parse_args()
         current_user = User.query.filter_by(username=args['username']).first_or_404()
         if current_user.check_password(args['password']):
             try:

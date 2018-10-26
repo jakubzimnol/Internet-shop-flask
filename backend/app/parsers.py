@@ -68,3 +68,6 @@ creating_subcategory_parser.replace_argument('name', type=check_unique_subcatego
 user_parser = reqparse.RequestParser(bundle_errors=True)
 user_parser.add_argument('username', help="Username must be unique", required=True, type=check_unique_user)
 user_parser.add_argument('password', help='This field cannot be blank', required=True)
+
+login_user_parser = user_parser.copy()
+login_user_parser.replace_argument('username', help="This field cannot be blank", required=True)
