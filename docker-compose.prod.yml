@@ -2,7 +2,7 @@ version: '3'
 
 services:
   backend:
-    command: uwsgi uwsgi.ini
+    command: bash -c "flask db upgrade && uwsgi uwsgi.ini"
     volumes:
       - static-files:/backend/eventsgo_project/static
     restart: always
