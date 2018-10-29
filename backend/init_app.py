@@ -41,12 +41,12 @@ def create_tables():
     db.create_all()
 
 
-api.add_resource(ItemsList, '/api/item')
-api.add_resource(Items, '/api/item/<item_id>')
-api.add_resource(CategoryList, '/api/category')
-api.add_resource(Categories, '/api/category/<category_id>')
-api.add_resource(SubcategoryList, '/api/subcategory')
-api.add_resource(Subcategories, '/api/subcategory/<subcategory_id>')
+api.add_resource(ItemsList, '/api/items')
+api.add_resource(Items, '/api/items/<item_id>')
+api.add_resource(CategoryList, '/api/categories')
+api.add_resource(Categories, '/api/categories/<category_id>')
+api.add_resource(SubcategoryList, '/api/subcategories')
+api.add_resource(Subcategories, '/api/subcategories/<subcategory_id>')
 api.add_resource(UserRegistration, '/api/registration')
 api.add_resource(UserLogin, '/api/login')
 api.add_resource(UserLogoutAccess, '/api/logout/access')

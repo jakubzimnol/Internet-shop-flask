@@ -18,11 +18,8 @@ def create_tokens(username):
         access_token = create_access_token(identity=username)
         refresh_token = create_refresh_token(identity=username)
         return access_token, refresh_token
-    except:
-        exc_info = sys.exc_info()
-        exc = CreateTokenException
-        exc.add_message(exc_info[2])
-        raise exc
+    except Exception:
+        raise CreateTokenException(message=sys.exc_info()[2])
 
 
 class Items(Resource):

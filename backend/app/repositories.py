@@ -1,5 +1,3 @@
-import sys
-
 from sqlalchemy import exc, exists
 
 from app.exceptions import IntegrityException
