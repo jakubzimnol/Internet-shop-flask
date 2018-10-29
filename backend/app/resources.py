@@ -1,10 +1,8 @@
-import sys
-
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, \
     get_jwt_identity, get_raw_jwt
 from flask_restful import Resource, marshal_with, marshal
 
-from app.exceptions import IntegrityException, CreateTokenException
+from app.exceptions import IntegrityException
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller, user_marshaller
 from app.models import Item, Category, Subcategory, User, RevokedTokenModel
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
@@ -14,12 +12,9 @@ from init_app import db
 
 
 def create_tokens(username):
-    try:
-        access_token = create_access_token(identity=username)
-        refresh_token = create_refresh_token(identity=username)
-        return access_token, refresh_token
-    except Exception:
-        raise CreateTokenException(message=sys.exc_info()[2])
+    access_token = create_access_token(identity=username)
+    refresh_token = create_refresh_token(identity=username)
+    return access_token, refresh_token
 
 
 class Items(Resource):
@@ -141,8 +136,6 @@ class UserRegistration(Resource):
                    }, 201
         except IntegrityException as exc:
             return exc.message, exc.status_code
-        except CreateTokenException as exc:
-            return exc.message, exc.status_code
 
 
 class UserLogin(Resource):
@@ -150,15 +143,12 @@ class UserLogin(Resource):
         args = login_user_parser.parse_args()
         current_user = User.query.filter_by(username=args['username']).first_or_404()
         if current_user.check_password(args['password']):
-            try:
-                access_token, refresh_token = create_tokens(args['username'])
-                return {
-                           'message': f'Logged in as {current_user.username}',
-                           'access_token': access_token,
-                           'refresh_token': refresh_token
-                       }
-            except CreateTokenException as exc:
-                return exc.message, exc.status_code
+            access_token, refresh_token = create_tokens(args['username'])
+            return {
+                'message': f'Logged in as {current_user.username}',
+                'access_token': access_token,
+                'refresh_token': refresh_token
+            }
         return {'message': 'Wrong credentials'}
 
 

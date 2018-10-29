@@ -5,45 +5,51 @@ from app.models import Category, Subcategory, Item, User
 from init_app import db
 
 
-def check_category(value):
-    if not db.session.query(exists().where(Category.name == value)).scalar():
-        raise ValueError("Value is not Category instance")
+def object_exist(model, value):
+    return db.session.query(exists().where(model.name == value)).scalar()
+
+
+def check_object(model, value):
+    if not object_exist(model, value):
+        raise ValueError(f"{value} is not class instance")
     return value
+
+
+def check_unique_object(model, value):
+    if object_exist(model, value):
+        raise ValueError(f"{value} already exist")
+    return value
+
+
+def check_category(value):
+    return check_object(Category, value)
 
 
 def check_subcategory(value):
-    if not db.session.query(exists().where(Subcategory.name == value)).scalar():
-        raise ValueError("Value is not Subcategory instance")
-    return value
+    return check_object(Subcategory, value)
 
 
 def check_unique_item(value):
-    if db.session.query(exists().where(Item.name == value)).scalar():
-        raise ValueError("Value already exist")
-    return value
+    return check_unique_object(Item, value)
 
 
 def check_unique_category(value):
-    if db.session.query(exists().where(Category.name == value)).scalar():
-        raise ValueError("Value already exist")
-    return value
+    return check_unique_object(Category, value)
 
 
 def check_unique_subcategory(value):
-    if db.session.query(exists().where(Subcategory.name == value)).scalar():
-        raise ValueError("Value already exist")
-    return value
+    return check_unique_object(Subcategory, value)
 
 
 def check_unique_user(value):
     if db.session.query(exists().where(User.username == value)).scalar():
-        raise ValueError("Value already exist")
+        raise ValueError(f"{value} already exist")
     return value
 
 
 item_parser = reqparse.RequestParser(bundle_errors=True)
 item_parser.add_argument('name', type=check_unique_item, help="That name already exist")
-item_parser.add_argument('category', type=check_category, help="This field must be the Category instance")
+item_parser.add_argument('category', type=check_category)
 item_parser.add_argument('subcategory', type=check_subcategory, help="This field must be the Subcategory instance")
 
 creating_item_parser = item_parser.copy()

@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from init_app import db
 
 
-class ObjectABC(ABC):
+class AbstractUpdater(ABC):
     name = NotImplemented
 
     @abstractmethod
@@ -36,7 +36,7 @@ class User(db.Model):
     bought_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
     sold_item = db.relationship('Item', backref='seller', lazy=True, foreign_keys=[sold_item_id])
     bought_item = db.relationship('Item', backref='buyer', lazy=True, foreign_keys=[bought_item_id])
-    role = db.Column(db.Enum(Role))
+    roles = db.Column(db.Enum(Role))
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -53,7 +53,7 @@ class User(db.Model):
         return check_password_hash(self._password_hash, password)
 
 
-@ObjectABC.register
+@AbstractUpdater.register
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -104,7 +104,7 @@ class Item(db.Model):
             self.image = parameters['image']
 
 
-@ObjectABC.register
+@AbstractUpdater.register
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, unique=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -117,7 +117,7 @@ class Category(db.Model):
         return '<Category %r>' % self.name
 
 
-@ObjectABC.register
+@AbstractUpdater.register
 class Subcategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
