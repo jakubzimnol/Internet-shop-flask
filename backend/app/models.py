@@ -1,6 +1,7 @@
 import enum
 from abc import ABC, abstractmethod
 
+from sqlalchemy import exists
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from init_app import db
 
 
-class ObjectABC(ABC):
+class AbstractUpdater(ABC):
     name = NotImplemented
 
     @abstractmethod
@@ -52,7 +53,7 @@ class User(db.Model):
         return check_password_hash(self._password_hash, password)
 
 
-@ObjectABC.register
+@AbstractUpdater.register
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -103,7 +104,7 @@ class Item(db.Model):
             self.image = parameters['image']
 
 
-@ObjectABC.register
+@AbstractUpdater.register
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, unique=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -116,7 +117,7 @@ class Category(db.Model):
         return '<Category %r>' % self.name
 
 
-@ObjectABC.register
+@AbstractUpdater.register
 class Subcategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -154,9 +155,8 @@ class Image(db.Model):
 
 class RevokedTokenModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    jti = db.Column(db.String(120))
+    jwt_id = db.Column(db.String(120))
 
     @classmethod
-    def is_jti_blacklisted(cls, jti):
-        query = cls.query.filter_by(jti=jti).first()
-        return bool(query)
+    def is_jti_blacklisted(cls, jwt_id):
+        return db.session.query(exists().where(cls.jwt_id == jwt_id)).scalar()

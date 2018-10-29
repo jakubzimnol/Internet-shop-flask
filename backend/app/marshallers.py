@@ -20,5 +20,4 @@ subcategory_marshaller = {
 
 user_marshaller = {
     'username': fields.String,
-    'password': fields.String,
 }
