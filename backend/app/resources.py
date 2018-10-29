@@ -10,10 +10,20 @@ from app.repositories import Repository
 from init_app import db
 
 
-def roles_required(role_names):
+def roles_required(role):
+    def wrapper(func):
+        def check_role_and_call(*args, **kwargs):
+            if check_role(role):
+                return func(*args, **kwargs)
+            return {'message': 'No permission!'}, 401
+        return check_role_and_call
+    return wrapper
+
+
+def check_role(role_names):
     current_user_name = get_jwt_identity()
-    user = User.query.filter_by(username=current_user_name).first_or_404()
-    return role_names is user.roles
+    user = User.query.filter_by(username=current_user_name).first()
+    return user and role_names is user.roles
 
 
 class Items(Resource):
@@ -77,14 +87,15 @@ class CategoryList(Resource):
         return marshal(Category.query.all(), category_marshaller)
 
     @jwt_required
+    @roles_required
     def post(self):
-        if roles_required('Admin'):
-            args = creating_category_parser.parse_args()
-            category = Repository.create_and_add(Category, args)
-            if not category:
-                return {'message': 'Something went wrong'}, 500
-            return marshal(category, category_marshaller), 201
-        return {'message': 'No permission!'}, 401
+        #if roles_required('Admin'):
+        args = creating_category_parser.parse_args()
+        category = Repository.create_and_add(Category, args)
+        if not category:
+            return {'message': 'Something went wrong'}, 500
+        return marshal(category, category_marshaller), 201
+        #return {'message': 'No permission!'}, 401
 
 
 class Subcategories(Resource):
