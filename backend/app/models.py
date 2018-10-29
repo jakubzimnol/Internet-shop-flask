@@ -35,7 +35,7 @@ class User(db.Model):
     bought_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
     sold_item = db.relationship('Item', backref='seller', lazy=True, foreign_keys=[sold_item_id])
     bought_item = db.relationship('Item', backref='buyer', lazy=True, foreign_keys=[bought_item_id])
-    role = db.Column(db.Enum(Role))
+    roles = db.Column(db.Enum(Role))
 
     def __repr__(self):
         return '<User %r>' % self.username

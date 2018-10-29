@@ -10,6 +10,12 @@ from app.repositories import Repository
 from init_app import db
 
 
+def roles_required(role_names):
+    current_user_name = get_jwt_identity()
+    user = User.query.filter_by(username=current_user_name).first_or_404()
+    return role_names is user.roles
+
+
 class Items(Resource):
     @marshal_with(item_marshaller)
     def get(self, item_id):
@@ -72,11 +78,13 @@ class CategoryList(Resource):
 
     @jwt_required
     def post(self):
-        args = creating_category_parser.parse_args()
-        category = Repository.create_and_add(Category, args)
-        if not category:
-            return {'message': 'Something went wrong'}, 500
-        return marshal(category, category_marshaller), 201
+        if roles_required('Admin'):
+            args = creating_category_parser.parse_args()
+            category = Repository.create_and_add(Category, args)
+            if not category:
+                return {'message': 'Something went wrong'}, 500
+            return marshal(category, category_marshaller), 201
+        return {'message': 'No permission!'}, 401
 
 
 class Subcategories(Resource):
