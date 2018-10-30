@@ -1,12 +1,12 @@
 from flask_restful import reqparse
 
-from app.models import Category, Subcategory, Item, User
+from app.models import Category, Subcategory, Item, User, Role
 from init_app import db
 
 
 def object_exist(model, value, name):
-    user_attribute = getattr(model, name)
-    return db.session.query(model.query.filter(user_attribute == value).exists()).scalar()
+    object_attribute = getattr(model, name)
+    return db.session.query(model.query.filter(object_attribute == value).exists()).scalar()
 
 
 def check_object(model, value, name='name'):
@@ -23,6 +23,11 @@ def check_unique_object(model, value, name='name'):
 
 def check_category(value):
     return check_object(Category, value)
+
+
+def check_role(value):
+    pass
+    #return check_object(Role)
 
 
 def check_subcategory(value):
@@ -58,16 +63,14 @@ category_parser = reqparse.RequestParser()
 category_parser.add_argument('name', type=check_unique_category)
 
 creating_category_parser = category_parser.copy()
-creating_category_parser.replace_argument('name', type=check_unique_category,
-                                          required=True, help="Name must be unique")
+creating_category_parser.replace_argument('name', type=check_unique_category, required=True)
 
 subcategory_parser = reqparse.RequestParser(bundle_errors=True)
-subcategory_parser.add_argument('name')#type=check_unique_subcategory
+subcategory_parser.add_argument('name')
 subcategory_parser.add_argument('category', type=check_category)
 
 creating_subcategory_parser = subcategory_parser.copy()
-creating_subcategory_parser.replace_argument('name', type=check_unique_subcategory,
-                                             required=True, help="Name must be unique")
+creating_subcategory_parser.replace_argument('name', type=check_unique_subcategory, required=True)
 
 user_parser = reqparse.RequestParser(bundle_errors=True)
 user_parser.add_argument('username', help="Username must be unique", required=True, type=check_unique_user)
@@ -75,3 +78,4 @@ user_parser.add_argument('password', help='This field cannot be blank', required
 
 login_user_parser = user_parser.copy()
 login_user_parser.replace_argument('username', help="This field cannot be blank", required=True)
+user_parser.add_argument('roles', type=check_role)

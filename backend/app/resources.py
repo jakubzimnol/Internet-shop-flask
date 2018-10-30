@@ -18,19 +18,13 @@ def create_tokens(username):
 
 
 def roles_required(role):
-    #def wrapper(func):
+    def wrapper(func):
         def check_role_and_call(*args, **kwargs):
-            #if check_role(role):
-                return role(*args, **kwargs)
-            #return {'message': 'No permission!'}, 401
+            if Repository.check_role(role):
+                return func(*args, **kwargs)
+            return {'message': 'No permission!'}, 401
         return check_role_and_call
-    #return wrapper
-
-
-def check_role(role_names):
-    current_user_name = get_jwt_identity()
-    user = User.query.filter_by(username=current_user_name).first()
-    return user and role_names is user.roles
+    return wrapper
 
 
 class Items(Resource):
@@ -94,9 +88,9 @@ class CategoryList(Resource):
         return marshal(Category.query.all(), category_marshaller)
 
     @jwt_required
-    @roles_required
+    @roles_required('Seller')
     def post(self):
-        #if roles_required('Admin'):
+        # if roles_required('Admin'):
         args = creating_category_parser.parse_args()
         try:
             category = Repository.create_and_add(Category, args)
@@ -130,6 +124,7 @@ class SubcategoryList(Resource):
         return marshal(Subcategory.query.all(), subcategory_marshaller)
 
     @jwt_required
+    @roles_required('Admin')
     def post(self):
         args = creating_subcategory_parser.parse_args()
         try:
@@ -143,7 +138,9 @@ class UserRegistration(Resource):
     def post(self):
         args = user_parser.parse_args()
         try:
-            new_user = Repository.create_and_add(User, {'username': args['username']})
+            copy_args = args.copy()
+            del copy_args['password']
+            new_user = Repository.create_and_add(User, copy_args)
             new_user.password_hash = args['password']
             db.session.commit()
             access_token, refresh_token = create_tokens(args['username'])
@@ -201,5 +198,7 @@ class TokenRefresh(Resource):
 
 
 class AllUsers(Resource):
+    #@jwt_required
+    #@roles_required('Admin')
     def get(self):
         return marshal(User.query.all(), user_marshaller)

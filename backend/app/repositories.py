@@ -1,6 +1,8 @@
+from flask_jwt_extended import get_jwt_identity
 from sqlalchemy import exc, exists
 
 from app.exceptions import IntegrityException
+from app.models import User
 from init_app import db
 
 
@@ -24,3 +26,9 @@ class Repository:
     @staticmethod
     def check_unique_name(value, model):
         return db.session.query(exists().where(model.name == value)).scalar()
+
+    @staticmethod
+    def check_role(role_names):
+        current_user_name = get_jwt_identity()
+        user = User.query.filter_by(username=current_user_name).first()
+        return user and role_names is user.roles
