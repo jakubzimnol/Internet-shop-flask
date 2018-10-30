@@ -26,8 +26,9 @@ def check_category(value):
 
 
 def check_role(value):
-    pass
-    #return check_object(Role)
+    if not (Role.has_value(value)):
+        raise ValueError(f"{value} is not a role")
+    return value
 
 
 def check_subcategory(value):

@@ -6,6 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from app.exceptions import IntegrityException
 from init_app import db
 
 
@@ -26,6 +27,10 @@ class Role(enum.Enum):
     SELLER = "Seller"
     BUYER = "Buyer"
 
+    @classmethod
+    def has_value(cls, value):
+        return any(value == item.value for item in cls)
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,10 +41,22 @@ class User(db.Model):
     bought_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
     sold_item = db.relationship('Item', backref='seller', lazy=True, foreign_keys=[sold_item_id])
     bought_item = db.relationship('Item', backref='buyer', lazy=True, foreign_keys=[bought_item_id])
-    roles = db.Column(db.Enum(Role))
+    _roles = db.Column(db.Enum(Role))
 
     def __repr__(self):
         return '<User %r>' % self.username
+
+    @hybrid_property
+    def roles(self):
+        return self._roles
+
+    @roles.setter
+    def roles(self, role):
+        for item in Role:
+            if role == item.value:
+                self._roles = item
+                return
+        raise IntegrityException()
 
     @hybrid_property
     def password_hash(self):
