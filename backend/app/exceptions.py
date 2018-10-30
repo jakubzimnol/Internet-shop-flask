@@ -1,10 +1,12 @@
 class ApiBaseException(Exception):
-    def __init__(self, status_code=400, message='undefined exception'):
-        self.status_code = status_code
-        self.message = message
+    message = None
+    status_code = 400
 
-    def add_message(self, msg):
-        self.message = ' '.join((self.message, msg))
+    def __init_subclass__(cls, **kwargs):
+        assert cls.message
+
+    def to_dict(self):
+        return self.message
 
 
 class IntegrityException(ApiBaseException):

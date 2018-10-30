@@ -62,7 +62,7 @@ creating_category_parser.replace_argument('name', type=check_unique_category,
                                           required=True, help="Name must be unique")
 
 subcategory_parser = reqparse.RequestParser(bundle_errors=True)
-subcategory_parser.add_argument('name', type=check_unique_subcategory)
+subcategory_parser.add_argument('name')#type=check_unique_subcategory
 subcategory_parser.add_argument('category', type=check_category)
 
 creating_subcategory_parser = subcategory_parser.copy()

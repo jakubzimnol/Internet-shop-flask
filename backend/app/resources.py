@@ -18,13 +18,13 @@ def create_tokens(username):
 
 
 def roles_required(role):
-    def wrapper(func):
+    #def wrapper(func):
         def check_role_and_call(*args, **kwargs):
-            if check_role(role):
-                return func(*args, **kwargs)
-            return {'message': 'No permission!'}, 401
+            #if check_role(role):
+                return role(*args, **kwargs)
+            #return {'message': 'No permission!'}, 401
         return check_role_and_call
-    return wrapper
+    #return wrapper
 
 
 def check_role(role_names):
