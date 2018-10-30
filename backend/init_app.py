@@ -1,10 +1,12 @@
 import os
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
+
+from app.exceptions import ApiBaseException
 
 application = Flask(__name__)
 api = Api(application)
@@ -39,6 +41,13 @@ def check_if_token_in_blacklist(decrypted_token):
 @application.before_first_request
 def create_tables():
     db.create_all()
+
+
+@application.errorhandler(ApiBaseException)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
 
 
 api.add_resource(ItemsList, '/api/items')
