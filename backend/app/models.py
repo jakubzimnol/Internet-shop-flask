@@ -158,5 +158,5 @@ class RevokedTokenModel(db.Model):
     jwt_id = db.Column(db.String(120))
 
     @classmethod
-    def is_jti_blacklisted(cls, jwt_id):
+    def is_blacklisted(cls, jwt_id):
         return db.session.query(exists().where(cls.jwt_id == jwt_id)).scalar()
