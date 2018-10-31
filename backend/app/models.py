@@ -1,15 +1,17 @@
 import enum
+from abc import ABC, abstractmethod
 
+from sqlalchemy import exists
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from init_app import db
-from abc import ABC, abstractmethod
 
 
-class ObjectABC(ABC):
-    name = NotImplemented
+class AbstractUpdater(ABC):
+    name = None
+
     @abstractmethod
     def update(self, parameters):
         if parameters.get('name'):
@@ -34,14 +36,14 @@ class User(db.Model):
     bought_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
     sold_item = db.relationship('Item', backref='seller', lazy=True, foreign_keys=[sold_item_id])
     bought_item = db.relationship('Item', backref='buyer', lazy=True, foreign_keys=[bought_item_id])
-    role = db.Column(db.Enum(Role))
+    roles = db.Column(db.Enum(Role))
 
     def __repr__(self):
         return '<User %r>' % self.username
 
     @hybrid_property
     def password_hash(self):
-        return self._password_hash;
+        return self._password_hash
 
     @password_hash.setter
     def password_hash(self, password):
@@ -50,7 +52,8 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self._password_hash, password)
 
-@ObjectABC.register
+
+@AbstractUpdater.register
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -91,7 +94,8 @@ class Item(db.Model):
         image.item_id = self.id
 
     def update(self, parameters):
-        super().update(parameters)
+        if parameters.get('name'):
+            self.name = parameters['name']
         if parameters.get('category'):
             self.category = parameters['category']
         if parameters.get('subcategory'):
@@ -99,17 +103,21 @@ class Item(db.Model):
         if parameters.get('image'):
             self.image = parameters['image']
 
-@ObjectABC.register
+
+@AbstractUpdater.register
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, unique=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
+
     def update(self, parameters):
-        super().update(parameters)
+        if parameters.get('name'):
+            self.name = parameters['name']
 
     def __repr__(self):
         return '<Category %r>' % self.name
 
-@ObjectABC.register
+
+@AbstractUpdater.register
 class Subcategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -126,7 +134,8 @@ class Subcategory(db.Model):
         self.category_id = category.id
 
     def update(self, parameters):
-        super().update(parameters)
+        if parameters.get('name'):
+            self.name = parameters['name']
         if parameters.get('category'):
             self.category = parameters['category']
 
@@ -142,3 +151,12 @@ class Image(db.Model):
 
     def __repr__(self):
         return '<Image %r>' % self.name
+
+
+class RevokedTokenModel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    jwi = db.Column(db.String(120))
+
+    @classmethod
+    def is_blacklisted(cls, jwi):
+        return db.session.query(exists().where(cls.jwi == jwi)).scalar()

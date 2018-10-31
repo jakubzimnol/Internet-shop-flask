@@ -17,3 +17,7 @@ subcategory_marshaller = {
     'name': fields.String,
     'category': fields.String,
 }
+
+user_marshaller = {
+    'username': fields.String,
+}
