@@ -133,7 +133,7 @@ class AuthorizationTestCase(BaseTestCaseClass):
                                         url="/api/categories",
                                         data=self.update_category_dict,
                                         buyer_status_code=401,
-                                        seller_status_code=401,
+                                        seller_status_code=201,
                                         admin_status_code=201)
 
     def test_category_put(self):
@@ -141,7 +141,7 @@ class AuthorizationTestCase(BaseTestCaseClass):
                                         url="/api/categories/1",
                                         data=self.update_category_dict,
                                         buyer_status_code=401,
-                                        seller_status_code=401,
+                                        seller_status_code=201,
                                         admin_status_code=201)
 
     def test_category_delete(self):
@@ -149,7 +149,7 @@ class AuthorizationTestCase(BaseTestCaseClass):
                                         url="/api/categories/1",
                                         data={},
                                         buyer_status_code=401,
-                                        seller_status_code=401,
+                                        seller_status_code=204,
                                         admin_status_code=204)
 
     def test_category_get(self):
@@ -173,7 +173,7 @@ class AuthorizationTestCase(BaseTestCaseClass):
                                         url="/api/subcategories",
                                         data=self.update_subcategory_dict,
                                         buyer_status_code=401,
-                                        seller_status_code=401,
+                                        seller_status_code=201,
                                         admin_status_code=201)
 
     def test_subcategory_put(self):
@@ -181,7 +181,7 @@ class AuthorizationTestCase(BaseTestCaseClass):
                                         url="/api/subcategories/1",
                                         data=self.update_subcategory_dict,
                                         buyer_status_code=401,
-                                        seller_status_code=401,
+                                        seller_status_code=201,
                                         admin_status_code=201)
 
     def test_subcategory_delete(self):
@@ -189,7 +189,7 @@ class AuthorizationTestCase(BaseTestCaseClass):
                                         url="/api/subcategories/1",
                                         data={},
                                         buyer_status_code=401,
-                                        seller_status_code=401,
+                                        seller_status_code=204,
                                         admin_status_code=204)
 
     def test_subcategory_get(self):

@@ -23,8 +23,14 @@ def check_unique_object(model, value, column='name'):
     return value
 
 
+def check_role(value):
+    if not (Role.has_value(value)):
+        raise ValueError(f"{value} is not a role")
+    return value
+
+
 check_category = partial(check_object, Category, column='name')
-check_subcategory= partial(check_object, Subcategory, column='name')
+check_subcategory = partial(check_object, Subcategory, column='name')
 check_unique_item = partial(check_unique_object, Item, column='name')
 check_unique_category = partial(check_unique_object, Category, column='name')
 check_unique_subcategory = partial(check_unique_object, Subcategory, column='name')
