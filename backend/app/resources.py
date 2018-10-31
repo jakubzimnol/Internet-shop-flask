@@ -2,7 +2,6 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
     get_jwt_identity, get_raw_jwt
 from flask_restful import Resource, marshal_with, marshal
 
-from app.exceptions import IntegrityException
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller, user_marshaller
 from app.models import Item, Category, Subcategory, User, RevokedTokenModel, Role
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
@@ -64,11 +63,8 @@ class ItemsList(Resource):
     @roles_required([Role.SELLER])
     def post(self):
         args = creating_item_parser.parse_args()
-        try:
-            item = Repository.create_and_add(Item, args)
-            return marshal(item, item_marshaller), 201
-        except IntegrityException as exc:
-            return exc.message, exc.status_code
+        item = Repository.create_and_add(Item, args)
+        return marshal(item, item_marshaller), 201
 
 
 class Categories(Resource):
@@ -105,11 +101,8 @@ class CategoryList(Resource):
     @roles_required([Role.SELLER])
     def post(self):
         args = creating_category_parser.parse_args()
-        try:
-            category = Repository.create_and_add(Category, args)
-            return marshal(category, category_marshaller), 201
-        except IntegrityException as exc:
-            return exc.message, exc.status_code
+        category = Repository.create_and_add(Category, args)
+        return marshal(category, category_marshaller), 201
 
 
 class Subcategories(Resource):
@@ -146,30 +139,24 @@ class SubcategoryList(Resource):
     @roles_required([Role.SELLER])
     def post(self):
         args = creating_subcategory_parser.parse_args()
-        try:
-            subcategory = Repository.create_and_add(Subcategory, args)
-            return marshal(subcategory, subcategory_marshaller), 201
-        except IntegrityException as exc:
-            return exc.message, exc.status_code
+        subcategory = Repository.create_and_add(Subcategory, args)
+        return marshal(subcategory, subcategory_marshaller), 201
 
 
 class UserRegistration(Resource):
     def post(self):
         args = user_parser.parse_args()
-        try:
-            copy_args = args.copy()
-            del copy_args['password']
-            new_user = Repository.create_and_add(User, copy_args)
-            new_user.password_hash = args['password']
-            db.session.commit()
-            access_token, refresh_token = create_tokens(args['username'])
-            return {
-                       'message': f"User {args['username']} was created",
-                       'access_token': access_token,
-                       'refresh_token': refresh_token
-                   }, 201
-        except IntegrityException as exc:
-            return exc.message, exc.status_code
+        copy_args = args.copy()
+        del copy_args['password']
+        new_user = Repository.create_and_add(User, copy_args)
+        new_user.password_hash = args['password']
+        db.session.commit()
+        access_token, refresh_token = create_tokens(args['username'])
+        return {
+                   'message': f"User {args['username']} was created",
+                   'access_token': access_token,
+                   'refresh_token': refresh_token
+               }, 201
 
 
 class UserLogin(Resource):
@@ -189,23 +176,17 @@ class UserLogin(Resource):
 class UserLogoutAccess(Resource):
     @jwt_required
     def post(self):
-        jwt_id = get_raw_jwt()['jti']
-        try:
-            Repository.create_and_add(RevokedTokenModel, {'jwt_id': jwt_id})
-            return {'message': 'Access token has been revoked'}, 201
-        except IntegrityException as exc:
-            return exc.message, exc.status_code
+        jwi = get_raw_jwt()['jti']
+        Repository.create_and_add(RevokedTokenModel, {'jwi': jwi})
+        return {'message': 'Access token has been revoked'}, 201
 
 
 class UserLogoutRefresh(Resource):
     @jwt_refresh_token_required
     def post(self):
-        jwt_id = get_raw_jwt()['jti']
-        try:
-            Repository.create_and_add(RevokedTokenModel, {'jwt_id': jwt_id})
-            return {'message': 'Refresh token has been revoked'}, 201
-        except IntegrityException as exc:
-            return exc.message, exc.status_code
+        jwi = get_raw_jwt()['jti']
+        Repository.create_and_add(RevokedTokenModel, {'jwi': jwi})
+        return {'message': 'Refresh token has been revoked'}, 201
 
 
 class TokenRefresh(Resource):
