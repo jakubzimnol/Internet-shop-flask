@@ -9,17 +9,10 @@ from flask_sqlalchemy import SQLAlchemy
 application = Flask(__name__)
 api = Api(application)
 
-basedir = os.path.abspath(os.path.dirname(__file__))
 if application.debug == True:
-    application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'app.db')
+     application.config.from_object('config.DevelopmentConfig')
 else:
-    application.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
-
-application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-application.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-application.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
-application.config['JWT_BLACKLIST_ENABLED'] = True
-application.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access', 'refresh']
+    application.config.from_object('config.BaseConfig')
 
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)

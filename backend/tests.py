@@ -7,7 +7,6 @@ from flask_testing import TestCase
 from init_app import application, db
 from app.models import User, Item, Category, Subcategory
 
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -42,7 +41,7 @@ class SQLAlchemyTest(TestCase):
         db.drop_all()
 
     def test_item_update(self):
-        self.item.update_item(self.update_item_dict)
+        self.item.update(self.update_item_dict)
         assert self.new_name in self.item.name
         assert self.category in self.item.category
         assert self.subcategory in self.item.subcategory
@@ -54,6 +53,25 @@ class SQLAlchemyTest(TestCase):
         assert self.new_name in data['name']
         assert self.category.name in data['category']
         assert self.subcategory.name in data['subcategory']
+
+
+class AuthorizationTestCase(TestCase):
+    application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'test.db')
+    TESTING = True
+
+    def create_app(self):
+        return application
+
+    def setUp(self):
+        db.create_all()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+
+    def test_some_json(self):
+        response = self.client.get("/items/")
+        self.assertEquals(response.json, dict(success=True))
 
 
 if __name__ == '__main__':
