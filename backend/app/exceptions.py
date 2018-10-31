@@ -6,7 +6,7 @@ class ApiBaseException(Exception):
         assert cls.message
 
     def to_dict(self):
-        return dict(self.message)
+        return {'message': self.message}
 
 
 class IntegrityException(ApiBaseException):

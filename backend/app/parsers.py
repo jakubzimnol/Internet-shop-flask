@@ -6,40 +6,29 @@ from app.models import Category, Subcategory, Item, User
 from init_app import db
 
 
-def object_exist(model, value, attribute):
-    object_attribute = getattr(model, attribute)
+def object_exist(model, value, column):
+    object_attribute = getattr(model, column)
     return db.session.query(model.query.filter(object_attribute == value).exists()).scalar()
 
 
-def check_object(model, value, attribute='name'):
-    if not object_exist(model, value, attribute):
+def check_object(model, value, column='name'):
+    if not object_exist(model, value, column):
         raise ValueError(f"{value} is not class instance")
     return value
 
 
-def check_unique_object(model, value, attribute='name'):
-    if object_exist(model, value, attribute):
+def check_unique_object(model, value, column='name'):
+    if object_exist(model, value, column):
         raise ValueError(f"{value} already exist")
     return value
 
 
-check_category = partial(check_object, Category, attribute='name')
-
-
-check_subcategory= partial(check_object, Subcategory, attribute='name')
-
-
-check_unique_item = partial(check_unique_object, Item, attribute='name')
-
-
-check_unique_category = partial(check_unique_object, Category, attribute='name')
-
-
-check_unique_subcategory = partial(check_unique_object, Subcategory, attribute='name')
-
-
-check_unique_user = partial(check_unique_object, User, attribute='username')
-
+check_category = partial(check_object, Category, column='name')
+check_subcategory= partial(check_object, Subcategory, column='name')
+check_unique_item = partial(check_unique_object, Item, column='name')
+check_unique_category = partial(check_unique_object, Category, column='name')
+check_unique_subcategory = partial(check_unique_object, Subcategory, column='name')
+check_unique_user = partial(check_unique_object, User, column='username')
 
 item_parser = reqparse.RequestParser(bundle_errors=True)
 item_parser.add_argument('name', type=check_unique_item)

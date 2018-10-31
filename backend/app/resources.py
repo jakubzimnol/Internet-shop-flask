@@ -143,16 +143,16 @@ class UserLogin(Resource):
 class UserLogoutAccess(Resource):
     @jwt_required
     def post(self):
-        jwt_id = get_raw_jwt()['jti']
-        Repository.create_and_add(RevokedTokenModel, {'jwt_id': jwt_id})
+        jwi = get_raw_jwt()['jti']
+        Repository.create_and_add(RevokedTokenModel, {'jwi': jwi})
         return {'message': 'Access token has been revoked'}, 201
 
 
 class UserLogoutRefresh(Resource):
     @jwt_refresh_token_required
     def post(self):
-        jwt_id = get_raw_jwt()['jti']
-        Repository.create_and_add(RevokedTokenModel, {'jwt_id': jwt_id})
+        jwi = get_raw_jwt()['jti']
+        Repository.create_and_add(RevokedTokenModel, {'jwi': jwi})
         return {'message': 'Refresh token has been revoked'}, 201
 
 

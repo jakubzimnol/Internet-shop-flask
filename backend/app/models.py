@@ -10,7 +10,7 @@ from init_app import db
 
 
 class AbstractUpdater(ABC):
-    name = NotImplemented
+    name = None
 
     @abstractmethod
     def update(self, parameters):
@@ -155,8 +155,8 @@ class Image(db.Model):
 
 class RevokedTokenModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    jwt_id = db.Column(db.String(120))
+    jwi = db.Column(db.String(120))
 
     @classmethod
-    def is_blacklisted(cls, jwt_id):
-        return db.session.query(exists().where(cls.jwt_id == jwt_id)).scalar()
+    def is_blacklisted(cls, jwi):
+        return db.session.query(exists().where(cls.jwi == jwi)).scalar()
