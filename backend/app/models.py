@@ -22,12 +22,19 @@ class AbstractUpdater(ABC):
 Base = declarative_base()
 
 
+class PayuStatus(enum.Enum):
+    NEW = "NEW"
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    REJECTED = "REJECTED"
+    CANCELED = "CANCELED"
+
+
 class Status(enum.Enum):
     NEW = "New"
-    PENDING = "Pending"
-    COMPLETED = "Completed"
-    REJECTED = "Rejected"
-    CANCELED = "Canceled"
+    PAID = "Paid"
+    SEND = "Send"
+    FINISHED = "Rejected"
 
 
 class Role(enum.Enum):
@@ -170,6 +177,7 @@ class Order(db.Model):
     payu_order_id = db.Column(db.String(120), nullable=True)
     buyer = db.relationship('User', backref='order', lazy=True)
     buyer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    _payment_status = db.Column(db.Enum(PayuStatus), default=PayuStatus.NEW)
     _status = db.Column(db.Enum(Status), default=Status.NEW)
 
     @hybrid_property
@@ -181,6 +189,20 @@ class Order(db.Model):
         for item in Status:
             if status_name == item.value:
                 self._status = item
+                return
+        raise IntegrityException()
+
+    @hybrid_property
+    def payment_status(self):
+        return self._payment_status
+
+    @payment_status.setter
+    def payment_status(self, status_name):
+        for item in PayuStatus:
+            if status_name == item.value:
+                self._payment_status = item
+                if item == PayuStatus.COMPLETED:
+                    self._status = Status.PAID
                 return
         raise IntegrityException()
 
