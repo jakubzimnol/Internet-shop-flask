@@ -79,6 +79,7 @@ class Item(db.Model):
     _subcategory = db.relationship('Subcategory', backref='item', lazy=True)
     subcategory_id = db.Column(db.Integer, db.ForeignKey('subcategory.id'), nullable=True)
     _image = db.relationship('Image', backref='item', lazy=True)
+    price = db.Column(db.Integer, nullable=False, default=0)
 
     def __repr__(self):
         return '<Item %r>' % self.name

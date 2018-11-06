@@ -29,6 +29,13 @@ def check_role(value):
     return value
 
 
+def check_price_value(value):
+    if value.type is not int:
+        raise ValueError(f"{value} is not float")
+    if value < 0:
+        raise ValueError(f"{value} is negative")
+
+
 check_category = partial(check_object, Category, column='name')
 check_subcategory = partial(check_object, Subcategory, column='name')
 check_unique_item = partial(check_unique_object, Item, column='name')
@@ -40,9 +47,17 @@ item_parser = reqparse.RequestParser(bundle_errors=True)
 item_parser.add_argument('name', type=check_unique_item)
 item_parser.add_argument('category', type=check_category)
 item_parser.add_argument('subcategory', type=check_subcategory)
+item_parser.add_argument('price', type=check_price_value)
 
 creating_item_parser = item_parser.copy()
 creating_item_parser.replace_argument('name', type=check_unique_item, required=True)
+
+root_items_parser = reqparse.RequestParser(bundle_errors=True)
+root_items_parser.add_argument('items', type=dict, action='append')
+
+buyer_items_parser = reqparse.RequestParser()
+buyer_items_parser.add_argument('name', type=check_unique_item, location=('items',))
+buyer_items_parser.add_argument('price', type=check_price_value, location=('items',))
 
 category_parser = reqparse.RequestParser()
 category_parser.add_argument('name', type=check_unique_category)
@@ -64,3 +79,4 @@ user_parser.add_argument('password', help='This field cannot be blank', required
 login_user_parser = user_parser.copy()
 login_user_parser.replace_argument('username', help="This field cannot be blank", required=True)
 user_parser.add_argument('roles', type=check_role)
+

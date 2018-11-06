@@ -22,7 +22,7 @@ jwt = JWTManager(application)
 
 from app.models import RevokedTokenModel
 from app.resources import ItemsList, Items, CategoryList, Categories, SubcategoryList, Subcategories, \
-    UserRegistration, UserLogin, UserLogoutAccess, UserLogoutRefresh, TokenRefresh, AllUsers
+    UserRegistration, UserLogin, UserLogoutAccess, UserLogoutRefresh, TokenRefresh, AllUsers, BuyItems
 
 
 @jwt.token_in_blacklist_loader
@@ -45,6 +45,7 @@ def handle_invalid_usage(error):
 
 api.add_resource(ItemsList, '/api/items')
 api.add_resource(Items, '/api/items/<item_id>')
+api.add_resource(BuyItems, '/api/items/buy')
 api.add_resource(CategoryList, '/api/categories')
 api.add_resource(Categories, '/api/categories/<category_id>')
 api.add_resource(SubcategoryList, '/api/subcategories')
