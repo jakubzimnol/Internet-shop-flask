@@ -38,40 +38,46 @@ def get_total_price(order):
     return sum([ordered_item.item.price for ordered_item in order.ordered_items])
 
 
-def send_new_order_to_payu(order_id, ip, currency_code, url_root, language):
-    #payu_path = os.environ.get('PAYU_PATH')
-    path = ''.join((os.environ.get('PAYU_PATH'), 'api/v2_1/orders'))
-    #pos_id = os.environ.get('POS_ID')
-    #payu_token = get_access_token()
-    token = ' '.join(('Bearer', get_access_token()))
-    headers = {"Content-Type": "application/json", "Authorization": token}
-    order = db.session.query(Order).get(order_id)
+def create_order_payload(order, url_root, currency_code, ip, language):
     products = get_products_list(order)
-    # products = [{"name": ordered_item.item.name, "unitPrice": ordered_item.item.price, "quantity": "1"}
-    #             for ordered_item in order.ordered_items]
     total_price = get_total_price(order)
-    #total_price = sum([ordered_item.item.price for ordered_item in order.ordered_items])
-    payload = {
+    return {
         "notifyUrl": f"{url_root}api/items/notify",
-        "continueUrl": f"{url_root}api/orders/{order_id}",
+        "continueUrl": f"{url_root}api/orders/{order.id}",
         "customerIp": ip,
         "merchantPosId": os.environ.get('POS_ID'),
         "description": order.description,
         "currencyCode": currency_code,
         "totalAmount": total_price,
         "buyer": {
-                    "email": order.buyer.email,
-                    "firstName": order.buyer.username,
-                    "language": language,
+            "email": order.buyer.email,
+            "firstName": order.buyer.username,
+            "language": language,
         },
         "products": products
     }
+
+
+def get_order_headers():
+    token = ' '.join(('Bearer', get_access_token()))
+    return {"Content-Type": "application/json", "Authorization": token}
+
+
+def set_payu_order_id(order, payu_order_id):
+    order.payu_order_id = payu_order_id
+    db.session.commit()
+
+
+def send_new_order_to_payu(order_id, ip, currency_code, url_root, language):
+    path = ''.join((os.environ.get('PAYU_PATH'), 'api/v2_1/orders'))
+    headers = get_order_headers()
+    order = db.session.query(Order).get(order_id)
+    payload = create_order_payload(order, url_root, currency_code, ip, language)
     response = requests.post(path, headers=headers, json=payload, allow_redirects=False)
     if response.status_code != 302:
         raise PayuException()
     json = response.json()
-    order.payu_order_id = json['orderId']
-    db.session.commit()
+    set_payu_order_id(order, json['orderId'])
     return json['redirectUri']
 
 

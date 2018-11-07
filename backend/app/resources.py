@@ -34,7 +34,7 @@ class PayuNotifier(Resource):
         return '', 200
 
 
-def create_order(args):
+def create_order(args, user):
     items = args['items']
     order_dict = {'description': args['description'], 'buyer': user}
     new_order = Repository.create_and_add(Order, order_dict)
@@ -51,12 +51,7 @@ class BuyItems(Resource):
         #user = Repository.get_logged_user()
         user = User.query.get(1)
         args = root_items_parser.parse_args()
-        order_id = create_order(args)
-        # order_dict = {'description': args['description'], 'buyer': user}
-        # new_order = Repository.create_and_add(Order, order_dict)
-        # order_id = new_order.id
-        # add_key_to_each_dict(items, 'order_id', order_id)
-        # Repository.create_and_add_objects_list(OrderedItem, items)
+        order_id = create_order(args, user)
         url_root = request.url_root
         ip = request.remote_addr
         currency_code = "PLN"

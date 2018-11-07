@@ -27,8 +27,9 @@ user_marshaller = {
 
 order_marshaller = {
     'id': fields.Integer,
-   # 'items': fields.list,
+     #'items': fields.list,
     'description': fields.String,
     'payu_order_id': fields.String,
-    'status': fields.String
+    'status': fields.String,
+    'payment_status': fields.String
 }
