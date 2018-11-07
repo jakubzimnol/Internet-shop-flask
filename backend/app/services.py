@@ -3,7 +3,7 @@ from json import JSONDecodeError
 
 import requests
 
-from app.exceptions import PayuException
+from app.exceptions import PayuException, BadContentInResponse
 from app.models import Order
 from init_app import db
 
@@ -27,7 +27,7 @@ def get_access_token():
         raise PayuException()
 
 
-def create_new_order(order_id, ip, currency_code):
+def create_new_order(order_id, ip, currency_code, url_root):
     payu_path = os.environ.get('PAYU_PATH')
     path = ''.join((payu_path, 'api/v2_1/orders'))
     pos_id = os.environ.get('POS_ID')
@@ -39,8 +39,8 @@ def create_new_order(order_id, ip, currency_code):
                 for ordered_item in order.ordered_items]
     total_price = sum([ordered_item.item.price for ordered_item in order.ordered_items])
     payload = {
-        "notifyUrl": "http://www.localhost:5000/api/items/notify",
-        "continueUrl": "http://www.localhost:5000/api/items/buy",
+        "notifyUrl": f"{url_root}api/items/notify",
+        "continueUrl": f"{url_root}api/orders/{order_id}",
         "customerIp": ip,
         "merchantPosId": pos_id,
         "description": order.description,
@@ -64,9 +64,21 @@ def create_new_order(order_id, ip, currency_code):
     return json['redirectUri']
 
 
-def get_notify(args):
-    order_id = args['orderId']
-    status = args['status']
+def verify_notification(headers, json):
+    signature_header = headers.get['OpenPayu-Signature']
+    signature = signature_header['signature']
+    concatenated = json + os.environ.get('MD5')
+    expected_signature = md5(concatenated)
+    if expected_signature !=signature:
+        raise AuthorizationException
+
+
+
+def set_order_status(args):
+    order = args.get('order')
+    if not order:
+        raise BadContentInResponse
+    order_id = order.get('orderId')
+    status = order.get('status')
     order = db.session.query(Order).filter_by(order_id=order_id)
-    print('notify')
     order.status = status

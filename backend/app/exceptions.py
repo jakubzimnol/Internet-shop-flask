@@ -19,3 +19,7 @@ class IntegrityException(ApiBaseException):
 
 class PayuException(ApiBaseException):
     message = 'Error with Payu server'
+
+
+class BadContentInResponse(ApiBaseException):
+    message = 'Bad content in response'

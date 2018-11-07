@@ -38,8 +38,8 @@ def add_key_to_each_dict(dict_list, key, value):
 
 class PayuNotifier(Resource):
     def post(self):
-        args = request.args
-        get_notify(args)
+        json = request.json
+        get_notify(json)
         return '', 200
 
 
@@ -57,9 +57,10 @@ class BuyItems(Resource):
         add_key_to_each_dict(items, 'order_id', order_id)
         Repository.create_and_add_objects_list(OrderedItem, items)
         # 'ordered_items': ordered_items
+        url_root = request.url_root
         ip = request.remote_addr
         currency_code = "PLN"
-        return redirect(create_new_order(order_id, ip, currency_code), 302)
+        return redirect(create_new_order(order_id, ip, currency_code, url_root), 302)
 
 
 class Items(Resource):
@@ -117,7 +118,7 @@ class Orders(Resource):
     # @jwt_required
     # @roles_required([Role.BUYER, Role.SELLER])
     def get(self, order_id):
-        return marshal(db.session.query(Order).filter_by(order_id=order_id).first_or_404(), order_marshaller)
+        return marshal(db.session.query(Order).get_or_404(order_id), order_marshaller)
 
 
 class Categories(Resource):
