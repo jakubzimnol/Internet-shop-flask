@@ -1,10 +1,11 @@
 import os
 from json import JSONDecodeError
-import json
+
 import requests
 
 from app.exceptions import PayuException
-from app.models import Item
+from app.models import Order
+from init_app import db
 
 
 def get_access_token():
@@ -13,7 +14,6 @@ def get_access_token():
     payu_path = os.environ.get('PAYU_PATH')
     payload = {'grant_type': 'client_credentials', 'client_id': client_id, 'client_secret': client_secret}
     path = ''.join((payu_path, 'pl/standard/user/oauth/authorize'))
-    #path = 'https://secure.snd.payu.com/standard/user/oauth/authorize'
     response = requests.post(path, params=payload)
     try:
         json = response.json()
@@ -27,63 +27,46 @@ def get_access_token():
         raise PayuException()
 
 
-def create_new_order(items, user, ip, currency_code):
+def create_new_order(order_id, ip, currency_code):
     payu_path = os.environ.get('PAYU_PATH')
     path = ''.join((payu_path, 'api/v2_1/orders'))
     pos_id = os.environ.get('POS_ID')
     payu_token = get_access_token()
     token = ' '.join(('Bearer', payu_token))
     headers = {"Content-Type": "application/json", "Authorization": token}
-    # payload = {"notifyUrl": "http://www.localhost:5000",
-    #            "customerIp": "127.0.0.1",
-    #            "merchantPosId": pos_id,
-    #            "description": "RTV market",
-    #            "currencyCode": "PLN",
-    #            "totalAmount": "21000",
-    #            "buyer": {
-    #                "email": "john.doe@example.com",
-    #                "phone": "654111654",
-    #                "firstName": "John",
-    #                "lastName": "Doe",
-    #                "language": "pl"
-    #            },
-    #            "settings":{
-    #                "invoiceDisabled":"true"
-    #             },
-    #            "products": [
-    #                {
-    #                    "name": "Wireless Mouse for Laptop",
-    #                    "unitPrice": "15000",
-    #                    "quantity": "1"
-    #                },
-    #                {
-    #                    "name": "HDMI cable",
-    #                    "unitPrice": "6000",
-    #                    "quantity": "1"
-    #                }
-    #            ]
-    #            }
-    products = [{"name": item['name'], "unitPrice": item['price'], "quantity": "1"} for item in items]
-    total_price = sum([item['price'] for item in items])
+    order = db.session.query(Order).get(order_id)
+    products = [{"name": ordered_item.item.name, "unitPrice": ordered_item.item.price, "quantity": "1"}
+                for ordered_item in order.ordered_items]
+    total_price = sum([ordered_item.item.price for ordered_item in order.ordered_items])
     payload = {
-        "notifyUrl": "http://www.localhost:5000/api/items/buy",
+        "notifyUrl": "http://www.localhost:5000/api/items/notify",
         "continueUrl": "http://www.localhost:5000/api/items/buy",
         "customerIp": ip,
         "merchantPosId": pos_id,
-        "description": "RTV market",
+        "description": order.description,
         "currencyCode": currency_code,
         "totalAmount": total_price,
         "buyer": {
-                    "email": user.email,
+                    "email": order.buyer.email,
             #        "phone": "654111654",
-                    "firstName": user.username,
+                    "firstName": order.buyer.username,
            #         "lastName": "Doe",
                     "language": "pl"
                 },
         "products": products
     }
-    response = requests.post(path, headers=headers, json=payload)
-    if response.status_code is not 200:
+    response = requests.post(path, headers=headers, json=payload, allow_redirects=False)
+    if response.status_code != 302:
         raise PayuException()
-    #print(response.url)
-    return response.url
+    json = response.json()
+    order.payu_order_id = json['orderId']
+    db.session.commit()
+    return json['redirectUri']
+
+
+def get_notify(args):
+    order_id = args['orderId']
+    status = args['status']
+    order = db.session.query(Order).filter_by(order_id=order_id)
+    print('notify')
+    order.status = status

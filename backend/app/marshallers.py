@@ -5,6 +5,8 @@ item_marshaller = {
     'name': fields.String,
     'category': fields.String,
     'subcategory': fields.String,
+    'price': fields.Integer,
+    'amount': fields.Integer
 }
 
 category_marshaller = {
@@ -21,4 +23,10 @@ subcategory_marshaller = {
 user_marshaller = {
     'username': fields.String,
     'roles': fields.String,
+}
+
+order_marshaller = {
+    'id': fields.Integer,
+   # 'items': fields.list,
+    'status': fields.String
 }

@@ -1,5 +1,3 @@
-import os
-
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
@@ -22,7 +20,8 @@ jwt = JWTManager(application)
 
 from app.models import RevokedTokenModel
 from app.resources import ItemsList, Items, CategoryList, Categories, SubcategoryList, Subcategories, \
-    UserRegistration, UserLogin, UserLogoutAccess, UserLogoutRefresh, TokenRefresh, AllUsers, BuyItems
+    UserRegistration, UserLogin, UserLogoutAccess, UserLogoutRefresh, TokenRefresh, AllUsers, BuyItems, PayuNotifier, \
+    OrderList, Orders
 
 
 @jwt.token_in_blacklist_loader
@@ -46,6 +45,9 @@ def handle_invalid_usage(error):
 api.add_resource(ItemsList, '/api/items')
 api.add_resource(Items, '/api/items/<item_id>')
 api.add_resource(BuyItems, '/api/items/buy')
+api.add_resource(PayuNotifier, '/api/items/notify')
+api.add_resource(OrderList, '/api/orders')
+api.add_resource(Orders, '/api/orders/<order_id>')
 api.add_resource(CategoryList, '/api/categories')
 api.add_resource(Categories, '/api/categories/<category_id>')
 api.add_resource(SubcategoryList, '/api/subcategories')
