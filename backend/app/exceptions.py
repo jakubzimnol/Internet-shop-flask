@@ -11,3 +11,8 @@ class ApiBaseException(Exception):
 
 class IntegrityException(ApiBaseException):
     message = 'Unknown integrity error in database'
+
+
+class NoPermissionException(ApiBaseException):
+    message = 'No permission!'
+    status_code = 401

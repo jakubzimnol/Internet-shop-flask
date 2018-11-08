@@ -3,9 +3,10 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from flask_restful import Resource, marshal_with, marshal
 
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller, user_marshaller
-from app.models import Item, Category, Subcategory, User, RevokedTokenModel
+from app.models import Item, Category, Subcategory, User, RevokedTokenModel, Role
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
     creating_category_parser, creating_subcategory_parser, user_parser, login_user_parser
+from app.permissions import roles_required
 from app.repositories import Repository
 from init_app import db
 
@@ -17,11 +18,14 @@ def create_tokens(username):
 
 
 class Items(Resource):
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     @marshal_with(item_marshaller)
     def get(self, item_id):
         return Item.query.get_or_404(item_id)
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     @marshal_with(item_marshaller)
     def delete(self, item_id):
         item = Item.query.get_or_404(item_id)
@@ -30,6 +34,7 @@ class Items(Resource):
         return '', 204
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     @marshal_with(item_marshaller)
     def put(self, item_id):
         item = Item.query.get_or_404(item_id)
@@ -40,10 +45,13 @@ class Items(Resource):
 
 
 class ItemsList(Resource):
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def get(self):
         return marshal(Item.query.all(), item_marshaller)
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     def post(self):
         args = creating_item_parser.parse_args()
         item = Repository.create_and_add(Item, args)
@@ -51,10 +59,13 @@ class ItemsList(Resource):
 
 
 class Categories(Resource):
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def get(self, category_id):
         return marshal(Category.query.get_or_404(category_id), category_marshaller)
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     def delete(self, category_id):
         item = Category.query.get_or_404(category_id)
         db.session.delete(item)
@@ -62,6 +73,7 @@ class Categories(Resource):
         return marshal('', category_marshaller), 204
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     def put(self, category_id):
         category = Category.query.get_or_404(category_id)
         args = category_parser.parse_args()
@@ -71,10 +83,13 @@ class Categories(Resource):
 
 
 class CategoryList(Resource):
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def get(self):
         return marshal(Category.query.all(), category_marshaller)
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     def post(self):
         args = creating_category_parser.parse_args()
         category = Repository.create_and_add(Category, args)
@@ -82,10 +97,13 @@ class CategoryList(Resource):
 
 
 class Subcategories(Resource):
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def get(self, subcategory_id):
         return marshal(Subcategory.query.get_or_404(subcategory_id), subcategory_marshaller)
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     def delete(self, subcategory_id):
         subcategory = Subcategory.query.get_or_404(subcategory_id)
         db.session.delete(subcategory)
@@ -93,6 +111,7 @@ class Subcategories(Resource):
         return marshal('', subcategory_marshaller), 204
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     def put(self, subcategory_id):
         subcategory = Subcategory.query.get_or_404(subcategory_id)
         args = subcategory_parser.parse_args()
@@ -102,10 +121,13 @@ class Subcategories(Resource):
 
 
 class SubcategoryList(Resource):
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def get(self):
         return marshal(Subcategory.query.all(), subcategory_marshaller)
 
     @jwt_required
+    @roles_required([Role.SELLER, ])
     def post(self):
         args = creating_subcategory_parser.parse_args()
         subcategory = Repository.create_and_add(Subcategory, args)
@@ -115,8 +137,9 @@ class SubcategoryList(Resource):
 class UserRegistration(Resource):
     def post(self):
         args = user_parser.parse_args()
-        new_user = Repository.create_and_add(User, {'username': args['username']})
-        new_user.password_hash = args['password']
+        password = args.pop('password')
+        new_user = Repository.create_and_add(User, args)
+        new_user.password_hash = password
         db.session.commit()
         access_token, refresh_token = create_tokens(args['username'])
         return {
@@ -165,5 +188,7 @@ class TokenRefresh(Resource):
 
 
 class AllUsers(Resource):
+    @jwt_required
+    @roles_required([Role.ADMIN, ])
     def get(self):
         return marshal(User.query.all(), user_marshaller)
