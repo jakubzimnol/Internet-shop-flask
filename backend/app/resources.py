@@ -5,13 +5,12 @@ from flask_restful import Resource, marshal_with, marshal
 
 from app.marshallers import item_marshaller, category_marshaller, subcategory_marshaller, user_marshaller, \
     order_marshaller
-from app.models import Item, Category, Subcategory, User, RevokedTokenModel, Role, Order, OrderedItem
+from app.models import Item, Category, Subcategory, User, RevokedTokenModel, Role, Order
 from app.parsers import item_parser, subcategory_parser, category_parser, creating_item_parser, \
-    creating_category_parser, creating_subcategory_parser, user_parser, login_user_parser, root_items_parser
+    creating_category_parser, creating_subcategory_parser, user_parser, login_user_parser, create_order_parser
 from app.permissions import roles_required
 from app.repositories import Repository
-from app.payu_services import send_new_order_to_payu, set_order_payment_status, verify_notification, \
-    add_key_to_each_dict, decrease_items_amount
+from app.services import PayuSender, NotificationReceiver, OrderCreator
 from init_app import db
 
 
@@ -23,41 +22,29 @@ def create_tokens(username):
 
 class PayuNotifier(Resource):
     def post(self):
-        #verify_notification(request.headers, request.json)
-        set_order_payment_status(request.json)
+        NotificationReceiver.verify_notification(request.headers, request.json)
+        NotificationReceiver.set_order_payment_status(request.json)
         return '', 200
 
 
-def create_order(args, user):
-    items = args['items']
-    order_dict = {'description': args['description'], 'buyer': user}
-    new_order = Repository.create_and_add(Order, order_dict)
-    order_id = new_order.id
-    add_key_to_each_dict(items, 'order_id', order_id)
-    ordered_items = Repository.create_and_add_objects_list(OrderedItem, items)
-    decrease_items_amount(ordered_items)
-    return order_id
-
-
 class BuyItems(Resource):
-    # @jwt_required
-    # @roles_required([Role.BUYER, Role.SELLER])
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def post(self):
-        #user = Repository.get_logged_user()
-        user = User.query.get(1)
-        args = root_items_parser.parse_args()
-        order_id = create_order(args, user)
+        user = Repository.get_logged_user()
+        args = create_order_parser.parse_args()
+        order_id = OrderCreator.create_order(args, user)
         url_root = request.url_root
         ip = request.remote_addr
         currency_code = "PLN"
         language = "pl"
-        return redirect(send_new_order_to_payu(order_id, ip, currency_code, url_root, language), 302)
+        return redirect(PayuSender.send_new_order_to_payu(order_id, ip, currency_code, url_root, language), 302)
 
 
 class Items(Resource):
 
-    # @jwt_required
-    # @roles_required([Role.BUYER, Role.SELLER])
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     @marshal_with(item_marshaller)
     def get(self, item_id):
         return Item.query.get_or_404(item_id)
@@ -83,8 +70,8 @@ class Items(Resource):
 
 
 class ItemsList(Resource):
-    # @jwt_required
-    # @roles_required([Role.BUYER, Role.SELLER])
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def get(self):
         return marshal(Item.query.all(), item_marshaller)
 
@@ -97,8 +84,8 @@ class ItemsList(Resource):
 
 
 class OrderList(Resource):
-    # @jwt_required
-    # @roles_required([Role.BUYER, Role.SELLER])
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def get(self):
         user = User.query.get_or_404(1)
         orders = db.session.query(Order).filter_by(buyer_id=user.id).all()
@@ -106,8 +93,8 @@ class OrderList(Resource):
 
 
 class Orders(Resource):
-    # @jwt_required
-    # @roles_required([Role.BUYER, Role.SELLER])
+    @jwt_required
+    @roles_required([Role.BUYER, Role.SELLER])
     def get(self, order_id):
         return marshal(db.session.query(Order).get_or_404(order_id), order_marshaller)
 

@@ -39,10 +39,18 @@ def check_not_negative_value(value):
 
 check_category = partial(check_object, Category, column='name')
 check_subcategory = partial(check_object, Subcategory, column='name')
+check_item = partial(check_object, Item, column='name')
 check_unique_item = partial(check_unique_object, Item, column='name')
 check_unique_category = partial(check_unique_object, Category, column='name')
 check_unique_subcategory = partial(check_unique_object, Subcategory, column='name')
 check_unique_user = partial(check_unique_object, User, column='username')
+
+
+def check_items_dict(item_field):
+    check_item(item_field['item'])
+    check_not_negative_value(item_field['quantity'])
+    return item_field
+
 
 item_parser = reqparse.RequestParser(bundle_errors=True)
 item_parser.add_argument('name', type=check_unique_item)
@@ -54,13 +62,9 @@ item_parser.add_argument('amount', type=check_not_negative_value)
 creating_item_parser = item_parser.copy()
 creating_item_parser.replace_argument('name', type=check_unique_item, required=True)
 
-root_items_parser = reqparse.RequestParser(bundle_errors=True)
-root_items_parser.add_argument('items', type=dict, action='append')
-root_items_parser.add_argument('description', required=True, help='This field cannot be blank')
-
-buyer_items_parser = reqparse.RequestParser()
-buyer_items_parser.add_argument('name', type=check_unique_item, location=('items',))
-buyer_items_parser.add_argument('quantity', type=check_not_negative_value, location=('items',))
+create_order_parser = reqparse.RequestParser(bundle_errors=True)
+create_order_parser.add_argument('items', type=check_items_dict, action='append')
+create_order_parser.add_argument('description', required=True, help='This field cannot be blank')
 
 category_parser = reqparse.RequestParser()
 category_parser.add_argument('name', type=check_unique_category)

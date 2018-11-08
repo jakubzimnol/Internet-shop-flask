@@ -42,13 +42,6 @@ class Repository:
         user = cls.get_logged_user()
         return user and user.roles is Role.ADMIN
 
-    # @staticmethod
-    # def change_name_to_object_list(model, objects, obj_name):
-    #     for obj in objects:
-    #         name = obj.pop('name')
-    #         obj[obj_name] = model.query.filter_by(name=name).first_or_404()
-    #     return objects
-
     @classmethod
     def create_and_add_objects_list(cls, model, objects):
         return [cls.create_and_add(model, obj_dict) for obj_dict in objects]
