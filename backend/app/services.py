@@ -5,7 +5,7 @@ from json import JSONDecodeError
 import requests
 from flask import json
 
-from app.exceptions import PayuException, BadContentInResponse, NoPermissionException
+from app.exceptions import PayuException, BadContentInResponse, NoPermissionException, IntegrityException
 from app.models import Order, PayuStatus, Status, OrderedItem
 from app.repositories import Repository
 from init_app import db
@@ -71,10 +71,9 @@ class PayuSender:
         db.session.commit()
 
     @classmethod
-    def send_new_order_to_payu(cls, order_id, ip, currency_code, url_root, language):
+    def send_new_order_to_payu(cls, order, ip, currency_code, url_root, language):
         path = ''.join((os.environ.get('PAYU_PATH'), 'api/v2_1/orders'))
         headers = cls.get_order_headers()
-        order = db.session.query(Order).get(order_id)
         payload = cls.create_order_payload(order, url_root, currency_code, ip, language)
         response = requests.post(path, headers=headers, json=payload, allow_redirects=False)
         if response.status_code != 302:
@@ -146,20 +145,25 @@ class OrderCreator:
     @staticmethod
     def decrease_items_amount(ordered_items):
         for ordered_item in ordered_items:
-            ordered_item.item.amount -= ordered_item['quantity']
+            ordered_item.item.amount -= ordered_item.quantity
+            if ordered_item.item.amount < 0:
+                db.session.rollback()
+                raise IntegrityException()
+        db.session.commit()
 
     @staticmethod
     def increase_items_amount(ordered_items):
         for ordered_item in ordered_items:
-            ordered_item.item.amount += ordered_item['quantity']
+            ordered_item.item.amount += ordered_item.quantity
+        db.session.commit()
 
     @classmethod
     def create_order(cls, args, user):
-        items = args['items']
+        items_dict = args['items']
         order_dict = {'description': args['description'], 'buyer': user}
         new_order = Repository.create_and_add(Order, order_dict)
         order_id = new_order.id
-        cls.add_key_to_each_dict(items, 'order_id', order_id)
-        ordered_items = Repository.create_and_add_objects_list(OrderedItem, items)
+        cls.add_key_to_each_dict(items_dict, 'order_id', order_id)
+        ordered_items = Repository.create_and_add_objects_list(OrderedItem, items_dict)
         cls.decrease_items_amount(ordered_items)
-        return order_id
+        return new_order

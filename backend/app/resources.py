@@ -33,12 +33,12 @@ class BuyItems(Resource):
     def post(self):
         user = Repository.get_logged_user()
         args = create_order_parser.parse_args()
-        order_id = OrderCreator.create_order(args, user)
+        order = OrderCreator.create_order(args, user)
         url_root = request.url_root
         ip = request.remote_addr
         currency_code = "PLN"
         language = "pl"
-        return redirect(PayuSender.send_new_order_to_payu(order_id, ip, currency_code, url_root, language), 302)
+        return redirect(PayuSender.send_new_order_to_payu(order, ip, currency_code, url_root, language), 302)
 
 
 class Items(Resource):
