@@ -1,3 +1,4 @@
+import hashlib
 import os
 from json import JSONDecodeError
 
@@ -5,9 +6,8 @@ import requests
 from flask import json
 
 from app.exceptions import PayuException, BadContentInResponse, NoPermissionException
-from app.models import Order
+from app.models import Order, PayuStatus, Status
 from init_app import db
-import hashlib
 
 
 def get_access_token():
@@ -98,12 +98,51 @@ def verify_notification(headers, json_dict):
         raise NoPermissionException
 
 
-def set_order_status(args):
+def do_nothing(order):
+    pass
+
+
+def set_status_canceled(order):
+    increase_items_amount(order.ordered_items)
+    order.status = Status.CANCELED
+
+
+def set_status_paid(order):
+    order.status = Status.PAID
+    db.session.commit()
+
+
+status_action = {
+    PayuStatus.PENDING.value: do_nothing,
+    PayuStatus.CANCELED.value: set_status_canceled,
+    PayuStatus.COMPLETED.value: set_status_paid,
+    PayuStatus.REJECTED.value: set_status_canceled,
+}
+
+
+def set_order_payment_status(args):
     order = args.get('order')
     if not order:
         raise BadContentInResponse
     payu_order_id = order.get('orderId')
-    status = order.get('status')
+    payment_status = order.get('status')
     order = db.session.query(Order).filter_by(payu_order_id=payu_order_id).first_or_404()
-    order.status = status
+    order.payment_status = payment_status
     db.session.commit()
+    status_action[payment_status](order)
+
+
+def add_key_to_each_dict(dict_list, key, value):
+    for dictionary in dict_list:
+        dictionary[key] = value
+    return dict_list
+
+
+def decrease_items_amount(ordered_items):
+    for ordered_item in ordered_items:
+        ordered_item.item.amount -= ordered_item['quantity']
+
+
+def increase_items_amount(ordered_items):
+    for ordered_item in ordered_items:
+        ordered_item.item.amount += ordered_item['quantity']

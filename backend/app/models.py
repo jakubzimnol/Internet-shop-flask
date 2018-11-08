@@ -34,7 +34,8 @@ class Status(enum.Enum):
     NEW = "New"
     PAID = "Paid"
     SEND = "Send"
-    FINISHED = "Rejected"
+    FINISHED = "Finished"
+    CANCELED = "Canceled"
 
 
 class Role(enum.Enum):
@@ -147,12 +148,6 @@ class Item(db.Model):
             self.image = parameters['image']
 
 
-# orders = db.Table('orders',
-#     db.Column('order_id', db.Integer, db.ForeignKey('order.id'), primary_key=True),
-#     db.Column('ordered_item_id', db.Integer, db.ForeignKey('ordered_item.id'), primary_key=True)
-# )
-
-
 class OrderedItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     _item = db.relationship('Item', backref='ordered_item', lazy=True)
@@ -187,7 +182,7 @@ class Order(db.Model):
     @status.setter
     def status(self, status_name):
         for item in Status:
-            if status_name == item.value:
+            if status_name == item:
                 self._status = item
                 return
         raise IntegrityException()
@@ -201,8 +196,6 @@ class Order(db.Model):
         for item in PayuStatus:
             if status_name == item.value:
                 self._payment_status = item
-                if item == PayuStatus.COMPLETED:
-                    self._status = Status.PAID
                 return
         raise IntegrityException()
 

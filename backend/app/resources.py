@@ -10,7 +10,8 @@ from app.parsers import item_parser, subcategory_parser, category_parser, creati
     creating_category_parser, creating_subcategory_parser, user_parser, login_user_parser, root_items_parser
 from app.permissions import roles_required
 from app.repositories import Repository
-from app.services import send_new_order_to_payu, set_order_status, verify_notification
+from app.payu_services import send_new_order_to_payu, set_order_payment_status, verify_notification, \
+    add_key_to_each_dict, decrease_items_amount
 from init_app import db
 
 
@@ -20,17 +21,10 @@ def create_tokens(username):
     return access_token, refresh_token
 
 
-def add_key_to_each_dict(dict_list, key, value):
-    for dict in dict_list:
-        dict[key] = value
-    return dict_list
-
-
 class PayuNotifier(Resource):
     def post(self):
-        json = request.json
-        #verify_notification(request.headers, json)
-        set_order_status(json)
+        #verify_notification(request.headers, request.json)
+        set_order_payment_status(request.json)
         return '', 200
 
 
@@ -40,7 +34,8 @@ def create_order(args, user):
     new_order = Repository.create_and_add(Order, order_dict)
     order_id = new_order.id
     add_key_to_each_dict(items, 'order_id', order_id)
-    Repository.create_and_add_objects_list(OrderedItem, items)
+    ordered_items = Repository.create_and_add_objects_list(OrderedItem, items)
+    decrease_items_amount(ordered_items)
     return order_id
 
 
@@ -247,7 +242,7 @@ class TokenRefresh(Resource):
 
 
 class AllUsers(Resource):
-    #@jwt_required
-    #@roles_required([Role.ADMIN, ])
+    @jwt_required
+    @roles_required([Role.ADMIN, ])
     def get(self):
         return marshal(User.query.all(), user_marshaller)
