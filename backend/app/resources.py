@@ -42,7 +42,6 @@ class BuyItems(Resource):
 
 
 class Items(Resource):
-
     @jwt_required
     @roles_required([Role.BUYER, Role.SELLER])
     @marshal_with(item_marshaller)

@@ -68,11 +68,10 @@ class User(db.Model):
 
     @roles.setter
     def roles(self, role):
-        for item in Role:
-            if role == item.value:
-                self._roles = item
-                return
-        raise IntegrityException()
+        try:
+            self._roles = Role(role)
+        except ValueError:
+            raise IntegrityException()
 
     @hybrid_property
     def password_hash(self):
@@ -180,12 +179,11 @@ class Order(db.Model):
         return self._status
 
     @status.setter
-    def status(self, status_name):
-        for item in Status:
-            if status_name == item:
-                self._status = item
-                return
-        raise IntegrityException()
+    def status(self, status):
+        try:
+            self._status = getattr(Status, status)
+        except AttributeError:
+            raise IntegrityException()
 
     @hybrid_property
     def payment_status(self):
@@ -193,11 +191,10 @@ class Order(db.Model):
 
     @payment_status.setter
     def payment_status(self, status_name):
-        for item in PayuStatus:
-            if status_name == item.value:
-                self._payment_status = item
-                return
-        raise IntegrityException()
+        try:
+            self._payment_status = PayuStatus(status_name)
+        except ValueError:
+            raise IntegrityException()
 
 
 @AbstractUpdater.register
