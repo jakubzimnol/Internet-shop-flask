@@ -41,3 +41,7 @@ class Repository:
     def is_admin_role(cls):
         user = cls.get_logged_user()
         return user and user.roles is Role.ADMIN
+
+    @classmethod
+    def create_and_add_objects_list(cls, model, objects):
+        return [cls.create_and_add(model, obj_dict) for obj_dict in objects]

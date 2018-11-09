@@ -2,6 +2,10 @@ class ApiBaseException(Exception):
     message = None
     status_code = 400
 
+    def __init__(self, message=None):
+        if message:
+            self.message = message
+
     def __init_subclass__(cls, **kwargs):
         assert cls.message
 
@@ -16,3 +20,11 @@ class IntegrityException(ApiBaseException):
 class NoPermissionException(ApiBaseException):
     message = 'No permission!'
     status_code = 401
+
+
+class PayuException(ApiBaseException):
+    message = 'Error with Payu server'
+
+
+class BadContentInResponse(ApiBaseException):
+    message = 'Bad content in response'

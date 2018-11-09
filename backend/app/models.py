@@ -22,6 +22,22 @@ class AbstractUpdater(ABC):
 Base = declarative_base()
 
 
+class PayuStatus(enum.Enum):
+    NEW = "NEW"
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    REJECTED = "REJECTED"
+    CANCELED = "CANCELED"
+
+
+class Status(enum.Enum):
+    NEW = "New"
+    PAID = "Paid"
+    SEND = "Send"
+    FINISHED = "Finished"
+    CANCELED = "Canceled"
+
+
 class Role(enum.Enum):
     ADMIN = "Admin"
     SELLER = "Seller"
@@ -78,6 +94,8 @@ class Item(db.Model):
     _subcategory = db.relationship('Subcategory', backref='item', lazy=True)
     subcategory_id = db.Column(db.Integer, db.ForeignKey('subcategory.id'), nullable=True)
     _image = db.relationship('Image', backref='item', lazy=True)
+    price = db.Column(db.Integer, nullable=False, default=0)
+    amount = db.Column(db.Integer, nullable=False, default=1)
 
     def __repr__(self):
         return '<Item %r>' % self.name
@@ -109,6 +127,15 @@ class Item(db.Model):
         image = Image.query.filter_by(name=image_name).first_or_404()
         image.item_id = self.id
 
+    @hybrid_property
+    def owner(self):
+        return self._owner
+
+    @owner.setter
+    def owner(self, user_name):
+        user = User.query.filter_by(name=user_name).first_or_404()
+        self.owner_id = user.id
+
     def update(self, parameters):
         if parameters.get('name'):
             self.name = parameters['name']
@@ -118,6 +145,56 @@ class Item(db.Model):
             self.subcategory = parameters['subcategory']
         if parameters.get('image'):
             self.image = parameters['image']
+
+
+class OrderedItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    _item = db.relationship('Item', backref='ordered_item', lazy=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+
+    @hybrid_property
+    def item(self):
+        return self._item
+
+    @item.setter
+    def item(self, name):
+        item = Item.query.filter_by(name=name).first_or_404()
+        self.item_id = item.id
+
+
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(200), nullable=False)
+    ordered_items = db.relationship('OrderedItem', backref=db.backref('order', lazy=True))
+    payu_order_id = db.Column(db.String(120), nullable=True)
+    buyer = db.relationship('User', backref='order', lazy=True)
+    buyer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    _payment_status = db.Column(db.Enum(PayuStatus), default=PayuStatus.NEW)
+    _status = db.Column(db.Enum(Status), default=Status.NEW)
+
+    @hybrid_property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, status):
+        try:
+            self._status = getattr(Status, status)
+        except AttributeError:
+            raise IntegrityException()
+
+    @hybrid_property
+    def payment_status(self):
+        return self._payment_status
+
+    @payment_status.setter
+    def payment_status(self, status_name):
+        try:
+            self._payment_status = PayuStatus(status_name)
+        except ValueError:
+            raise IntegrityException()
 
 
 @AbstractUpdater.register
