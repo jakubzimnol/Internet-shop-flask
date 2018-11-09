@@ -12,14 +12,22 @@ from init_app import db
 
 
 class PayuSender:
-    @classmethod
-    def get_access_token(cls):
+    @staticmethod
+    def get_access_token_payload():
         client_id = os.environ.get('CLIENT_ID')
         client_secret = os.environ.get('CLIENT_SECRET')
+        return {'grant_type': 'client_credentials', 'client_id': client_id, 'client_secret': client_secret}
+
+    @classmethod
+    def send_access_token_request(cls):
         payu_path = os.environ.get('PAYU_PATH')
-        payload = {'grant_type': 'client_credentials', 'client_id': client_id, 'client_secret': client_secret}
+        payload = cls.get_access_token_payload()
         path = ''.join((payu_path, 'pl/standard/user/oauth/authorize'))
-        response = requests.post(path, params=payload)
+        return requests.post(path, params=payload)
+
+    @classmethod
+    def get_access_token(cls):
+        response = cls.send_access_token_request()
         try:
             json_dict = response.json()
             if response.status_code is not 200:
@@ -71,24 +79,28 @@ class PayuSender:
         db.session.commit()
 
     @classmethod
-    def send_new_order_to_payu(cls, order, ip, currency_code, url_root, language):
+    def send_new_order_request(cls, order, url_root, currency_code, ip, language):
         path = ''.join((os.environ.get('PAYU_PATH'), 'api/v2_1/orders'))
         headers = cls.get_order_headers()
         payload = cls.create_order_payload(order, url_root, currency_code, ip, language)
-        response = requests.post(path, headers=headers, json=payload, allow_redirects=False)
+        return requests.post(path, headers=headers, json=payload, allow_redirects=False)
+
+    @classmethod
+    def send_new_order(cls, order, ip, currency_code, url_root, language):
+        response = cls.send_new_order_request(order, url_root, currency_code, ip, language)
         if response.status_code != 302:
             raise PayuException()
-        json = response.json()
-        cls.set_payu_order_id(order, json['orderId'])
-        return json['redirectUri']
+        json_dict = response.json()
+        cls.set_payu_order_id(order, json_dict['orderId'])
+        return json_dict['redirectUri']
 
 
 class NotificationReceiver:
     @staticmethod
     def get_signature(open_payu_header):
-        result1 = open_payu_header.split('signature=')
-        result2 = result1[1].split(';')
-        return result2[0]
+        result = open_payu_header.split('signature=')
+        result = result[1].split(';')
+        return result[0]
 
     @classmethod
     def verify_notification(cls, headers, json_dict):
@@ -109,6 +121,7 @@ class NotificationReceiver:
     def set_status_canceled(order):
         OrderCreator.increase_items_amount(order.ordered_items)
         order.status = Status.CANCELED
+        db.session.commit()
 
     @staticmethod
     def set_status_paid(order):

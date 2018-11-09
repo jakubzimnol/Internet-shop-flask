@@ -38,7 +38,7 @@ class BuyItems(Resource):
         ip = request.remote_addr
         currency_code = "PLN"
         language = "pl"
-        return redirect(PayuSender.send_new_order_to_payu(order, ip, currency_code, url_root, language), 302)
+        return redirect(PayuSender.send_new_order(order, ip, currency_code, url_root, language), 302)
 
 
 class Items(Resource):

@@ -1,5 +1,16 @@
 from flask_restful import fields, marshal
 
+
+class OrderItemMarshaller(fields.Raw):
+    def format(self, item):
+        return marshal(item, item_marshaller)
+
+
+class OrderItemsListMarshaller(fields.Raw):
+    def format(self, ordered_items):
+        return [marshal(order_item, order_item_marshaller) for order_item in ordered_items]
+
+
 item_marshaller = {
     'id': fields.Integer,
     'name': fields.String,
@@ -25,27 +36,15 @@ user_marshaller = {
     'roles': fields.String,
 }
 
-
-class OrderItemMarshaller(fields.Raw):
-    def format(self, item):
-        return marshal(item, item_marshaller)
-
-
 order_item_marshaller = {
     'id': fields.Integer,
     'item': OrderItemMarshaller,
     'quantity': fields.Integer
 }
 
-
-class OrderItemsMarshaller(fields.Raw):
-    def format(self, ordered_items):
-        return [marshal(order_item, order_item_marshaller) for order_item in ordered_items]
-
-
 order_marshaller = {
     'id': fields.Integer,
-    'ordered_items': OrderItemsMarshaller,
+    'ordered_items': OrderItemsListMarshaller,
     'description': fields.String,
     'payu_order_id': fields.String,
     'status': fields.String,
